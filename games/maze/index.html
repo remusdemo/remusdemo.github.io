@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Maze Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+    #maze {
+      display: grid;
+      gap: 1px;
+    }
+    .cell {
+      border: 1px solid #ccc;
+    }
+    .wall { background: black; }
+    .entry { background: darkgreen; }
+    .exit { background: red; }
+    .player { background: blue !important; }
+    .playerpath { background: lightcoral !important; }
+    .shortestpath { background: green !important; }
+    .shortpathb { background: rgba(255, 215, 0, 0.5) ; }      /* gold */
+    .shortpathc { background: rgba(173, 216, 230, 0.5) ; }    /* lightblue */
+    .shortpathd { background: rgba(255, 165, 0, 0.5) ; }      /* orange */
+    .shortpathe { background: rgba(0, 255, 255, 0.5) ; }      /* cyan */
+    .shortpathf { background: rgba(238, 130, 238, 0.5) ; }    /* violet */
+    .overlap { background: grey !important; }
+   
+    .enemy {
+      background: purple !important;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    #message-bar {
+      margin-bottom: 20px; /* increased from 10px to 24px */
+      font-size: 20px;
+      color: #2e7d32;
+      font-weight: bold;
+      background-color: #e8f5e9;
+      border: 2px solid #81c784;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      visibility: hidden;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="message-bar"></div>
+  <div id="maze"></div>
+
+
+  <script>
+    // Maze config
+    const cellSize = 14;       // Size of each cell in pixels
+    const mazeSize = 52;      // Size of maze
+    let maze = [];
+    const entry = { x: 1, y: 1 };
+
+    const numAltPaths = 5; // max value = 5 for more add shortpathf g, h etc
+    let altPaths = [];
+    let shortestPath = [];
+
+    let hasStarted = false;
+    let gameEnded = false;
+    let resetProgress = false;
+
+// Player tracking
+    let playerPosition = { ...entry };
+    let playerPath = [];
+    let moveCount = 0;
+   
+    const MAX_TIME = 100;
+    let timer = 0;
+    let timerInterval;
+   
+    const SPAWN_INTERVAL = 10;
+    let enemySpawnInterval;
+    let enemies = [];
+    let enemyMovementInterval;
+
+    // cheat codes
+    let renderHelp = false;
+    let renderOptimal = false;
+   
+    // UI elements
+    const messageEl = document.getElementById("message-bar");
+
+    const directions = [
+      { x: 0, y: -1 },
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 }
+    ];
+
+    let usedExits = new Set();
+
+    function getExit() {
+      const candidates = [];
+
+      // Generate all valid positions on bottom edge (y = mazeSize - 2)
+      for (let x = 1; x < mazeSize - 1; x++) {
+        const point = { x, y: mazeSize - 2 };
+        if (manhattanDistance(point, { x: 1, y: 1 }) >= 4) {
+          candidates.push(point);
+        }
+      }
+
+      // Generate all valid positions on right edge (x = mazeSize - 2)
+      for (let y = 1; y < mazeSize - 1; y++) {
+        const point = { x: mazeSize - 2, y };
+        if (manhattanDistance(point, { x: 1, y: 1 }) >= 4) {
+          candidates.push(point);
+        }
+      }
+
+      // Filter out already used exits
+      const unused = candidates.filter(p => !usedExits.has(`${p.x},${p.y}`));
+
+      if (unused.length === 0) {
+        throw new Error("No more unique exits available.");
+      }
+
+      // Pick a random one
+      const chosen = unused[Math.floor(Math.random() * unused.length)];
+      usedExits.add(`${chosen.x},${chosen.y}`);
+      return chosen;
+    }
+
+    function manhattanDistance(a, b) {
+      return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    }
+
+
+    function inBounds(x, y) {
+      return x >= 0 && y >= 0 && x < mazeSize && y < mazeSize;
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function generateMazePrim(mazeExit) {
+      const m = Array.from({ length: mazeSize }, () => Array(mazeSize).fill("wall"));
+      const start = entry;
+      m[start.y][start.x] = "path";
+      const walls = [];
+
+      for (let { x: dx, y: dy } of directions) {
+        const nx = start.x + dx * 2;
+        const ny = start.y + dy * 2;
+        if (inBounds(nx, ny)) walls.push({ x: nx, y: ny, px: start.x + dx, py: start.y + dy });
+      }
+
+      while (walls.length) {
+        shuffle(walls);
+        const { x, y, px, py } = walls.pop();
+        if (m[y][x] === "wall") {
+          const surroundingPaths = directions.filter(({ x: dx, y: dy }) => {
+            const nx = x + dx;
+            const ny = y + dy;
+            return inBounds(nx, ny) && m[ny][nx] === "path";
+          }).length;
+          if (surroundingPaths <= 1) {
+            m[y][x] = "path";
+            m[py][px] = "path";
+            for (let { x: dx, y: dy } of directions) {
+              const nx = x + dx * 2;
+              const ny = y + dy * 2;
+              if (inBounds(nx, ny) && m[ny][nx] === "wall") {
+                walls.push({ x: nx, y: ny, px: x + dx, py: y + dy });
+              }
+            }
+          }
+        }
+      }
+
+      m[entry.y][entry.x] = "entry";
+      m[mazeExit.y][mazeExit.x] = "exit";
+      return m;
+    }
+
+    function dijkstra(mz, start, goal) {
+      const dist = Array.from({ length: mazeSize }, () => Array(mazeSize).fill(Infinity));
+      dist[start.y][start.x] = 0;
+      const visited = new Set();
+      const prev = {};
+      const pq = [start];
+
+      while (pq.length) {
+        pq.sort((a, b) => dist[a.y][a.x] - dist[b.y][b.x]);
+        const current = pq.shift();
+        const key = `${current.x},${current.y}`;
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        if (current.x === goal.x && current.y === goal.y) break;
+
+        for (const { x: dx, y: dy } of directions) {
+          const nx = current.x + dx;
+          const ny = current.y + dy;
+          if (inBounds(nx, ny) && mz[ny][nx] !== "wall") {
+            const alt = dist[current.y][current.x] + 1;
+            if (alt < dist[ny][nx]) {
+              dist[ny][nx] = alt;
+              prev[`${nx},${ny}`] = `${current.x},${current.y}`;
+              pq.push({ x: nx, y: ny });
+            }
+          }
+        }
+      }
+
+      const path = [];
+      let curr = `${goal.x},${goal.y}`;
+      while (prev[curr]) {
+        const [x, y] = curr.split(",").map(Number);
+        path.unshift({ x, y });
+        curr = prev[curr];
+      }
+      path.unshift(start);
+      return path;
+    }
+
+    function generateMainMaze() {
+      exit = getExit();
+      const mazeA = generateMazePrim(exit);
+      let tempMaze = mazeA.map(row => row.slice());
+
+      altPaths = [];
+
+      for (let i = 0; i < numAltPaths; i++) {
+        const altExit = getExit();
+        const altMaze = generateMazePrim(altExit);
+        const altPath = dijkstra(altMaze, entry, altExit);
+        altPaths.push(altPath);
+
+const oddsOfCarving = 0.8;
+        for (const { x, y } of altPath) {
+          if ((x !== entry.x || y !== entry.y) && (x !== exit.x || y !== exit.y)) {
+            if (tempMaze[y][x] === "wall" && Math.random() < oddsOfCarving) {
+              tempMaze[y][x] = "path";
+            }
+          }
+        }
+      }
+
+      shortestPath = dijkstra(tempMaze, entry, exit);
+      return tempMaze;
+    }
+
+
+    function resetGame() {
+      if (resetProgress) return;
+      resetProgress = true;
+     
+     
+      clearInterval(timerInterval);
+      clearInterval(enemySpawnInterval);
+      clearInterval(enemyMovementInterval);
+     
+      usedExits = new Set();
+      messageEl.innerHTML = `Moves: 0 | Time: 0s`
+      messageEl.style.visibility = 'visible';
+     
+      maze = generateMainMaze();
+     
+      maze[entry.y][entry.x] = "entry";
+      maze[exit.y][exit.x] = "exit";
+      playerPosition = { ...entry };
+      playerPath = [entry];
+      moveCount = 0;
+      timer = 0;
+      hasStarted = false;
+      gameEnded = false;
+      enemies = [];
+
+      renderMaze();
+     
+      resetProgress = false;
+    }
+   
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+
+    function spawnEnemy() {
+      if (gameEnded) return;
+      let x, y;
+      do {
+        x = Math.floor(Math.random() * mazeSize);
+        y = Math.floor(Math.random() * mazeSize);
+      } while (
+        maze[y][x] === 'wall' ||
+        (x === playerPosition.x && y === playerPosition.y) ||
+        enemies.some(e => e.x === x && e.y === y)
+      );
+
+      const enemy = {
+        x,
+        y,
+        path: [],
+        stepIndex: 0
+      };
+      enemies.push(enemy);
+    }
+
+    // Use Dijkstra’s algorithm to find a shortest path on the current maze grid
+    function dijkstra(mz, start, goal) {
+      const dist = Array.from({ length: mazeSize }, () => Array(mazeSize).fill(Infinity));
+      const prev = {};
+      const visited = new Set();
+      const pq = [start];
+
+      dist[start.y][start.x] = 0;
+
+      while (pq.length) {
+        // grab the unvisited node with smallest distance
+        pq.sort((a, b) => dist[a.y][a.x] - dist[b.y][b.x]);
+        const current = pq.shift();
+        const key = `${current.x},${current.y}`;
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        // stop if we reached the goal
+        if (current.x === goal.x && current.y === goal.y) break;
+
+        // relax all neighbors
+        for (const { x: dx, y: dy } of directions) {
+          const nx = current.x + dx;
+          const ny = current.y + dy;
+          if (!inBounds(nx, ny) || mz[ny][nx] === 'wall') continue;
+
+          const alt = dist[current.y][current.x] + 1;
+          if (alt < dist[ny][nx]) {
+            dist[ny][nx] = alt;
+            prev[`${nx},${ny}`] = `${current.x},${current.y}`;
+            pq.push({ x: nx, y: ny });
+          }
+        }
+      }
+
+      // reconstruct the path
+      const path = [];
+      let step = `${goal.x},${goal.y}`;
+      while (prev[step]) {
+        const [sx, sy] = step.split(',').map(Number);
+        path.unshift({ x: sx, y: sy });
+        step = prev[step];
+      }
+      // include the start
+      path.unshift(start);
+
+      return path;
+    }
+
+
+    // Pick a random reachable tile within `maxLen` and return the Dijkstra path to it.
+    // If no multi‐step path is found, returns [start].
+    function generateRandomPath(start, maxLen = 20) {
+      const radius = maxLen;
+      const candidates = [];
+
+      // gather all valid end‐points in the square around `start`
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const x = start.x + dx;
+          const y = start.y + dy;
+          if (
+            inBounds(x, y) &&
+            maze[y][x] !== 'wall' &&
+            !(x === start.x && y === start.y)
+          ) {
+            candidates.push({ x, y });
+          }
+        }
+      }
+
+      // shuffle and try each until we find a path
+      for (const cand of shuffleArray(candidates)) {
+        const path = dijkstra(maze, start, cand);
+        if (path && path.length > 1) {
+          return path;
+        }
+      }
+
+      // fallback to staying in place if absolutely no path found
+      return [start];
+    }
+
+
+    function updateAllEnemies() {
+      if (gameEnded) return;
+
+      enemies.forEach(enemy => {
+        // generate a new path if needed
+        if (!enemy.path || enemy.stepIndex >= enemy.path.length) {
+          enemy.path     = generateRandomPath({ x: enemy.x, y: enemy.y }, 20);
+          enemy.stepIndex = 0;
+        }
+
+        // take the next step
+        const next = enemy.path[enemy.stepIndex++];
+        if (next) {
+          enemy.x = next.x;
+          enemy.y = next.y;
+
+          // collision?
+          if (enemy.x === playerPosition.x && enemy.y === playerPosition.y) {
+            endGame(false);
+          }
+        }
+      });
+
+      renderMaze();
+    }
+   
+    function isSamePosition(point,x, y) {
+      return (point && x === point.x && y === point.y);
+    }
+
+   
+    function showAltPath(cell, x, y, path, style) {
+      if (path.some(p => p.x === x && p.y === y)) {
+        if (isSamePosition(exit, x, y)) return;
+        if (isSamePosition(playerPosition, x, y)) return;
+        if (maze[y][x] === 'wall') return;
+       
+        if (cell.classList.contains("playerpath")) {
+          cell.classList.add("overlap");
+        } else {
+          cell.classList.add(style);
+        }
+      }
+    }
+   
+    function renderMaze() {
+      const mazeDiv = document.getElementById("maze");
+      mazeDiv.innerHTML = "";
+     
+      mazeDiv.style.gridTemplateColumns = `repeat(${mazeSize}, ${cellSize}px)`;
+      mazeDiv.style.gridTemplateRows = `repeat(${mazeSize}, ${cellSize}px)`;
+
+   
+      for (let y = 0; y < mazeSize; y++) {
+        for (let x = 0; x < mazeSize; x++) {
+          const cell = document.createElement("div");
+         
+         
+          cell.className = "cell";
+          cell.style.width = `${cellSize}px`;
+          cell.style.height = `${cellSize}px`;
+
+          if (gameEnded) {
+            showAltPath(cell, x, y, playerPath, "playerpath");
+          }
+         
+          if (gameEnded || renderHelp || renderOptimal) {
+            showAltPath(cell, x, y, shortestPath, "shortestpath");
+          }
+
+          if (renderHelp) {
+            altPaths.forEach((path, index) => {
+              const styleClass = `shortpath${String.fromCharCode(98 + index)}`; // b, c, d...
+              showAltPath(cell, x, y, path, styleClass);
+            });
+          }
+
+       
+          if (playerPosition.x === x && playerPosition.y === y) {
+            cell.classList.add("player");
+          }
+
+          if (enemies.some(e => e.x === x && e.y === y)) {
+            cell.classList.add("enemy");
+          }
+
+          // color the exits and the walls
+          if (x === entry.x && y === entry.y) cell.classList.add("entry");
+          else if (x === exit.x && y === exit.y) cell.classList.add("exit");
+          else cell.classList.add(maze[y][x]);
+         
+         
+          mazeDiv.appendChild(cell);
+        }
+      }
+    }
+
+    function updatePlayer(x, y) {
+      if (gameEnded) return;
+      if (!inBounds(x, y) || maze[y][x] === "wall") return;
+
+      if (!hasStarted) {
+        hasStarted = true;
+        timerInterval = setInterval(() => {
+          timer++;
+          messageEl.innertHtml = `Moves: ${moveCount} | Time: ${timer}s`;
+        }, 1000);
+       
+        enemySpawnInterval = setInterval(spawnEnemy, SPAWN_INTERVAL * 1000);
+        enemyMovementInterval = setInterval(updateAllEnemies, 500);
+      }
+
+      playerPosition = { x, y };
+      moveCount++;
+      playerPath.push({ x, y });
+
+      if (enemies.some(e => e.x === x && e.y === y)) {
+        endGame(false); return;
+      }
+     
+      if (timer >= MAX_TIME) {
+      endGame(false); return;
+      }
+
+      if (maze[y][x] === "exit") {
+        endGame(true);
+      } else {
+        messageEl.innerHTML = `Moves: ${moveCount} | Time: ${timer}s`;
+        renderMaze();
+      }
+    }
+
+    function calculatePoints(optimal, actual, time) {
+      let points = 3000;
+
+      // Penalty for actual > optimal, 100 points per 5% over
+      if (actual > optimal) {
+        const deltaOptimal = (actual - optimal);
+        const percentageOver = (deltaOptimal / optimal) * 100;
+        const longPathPenalty = percentageOver / 2;
+        points -= Math.min(1200, (longPathPenalty * 75)) + (deltaOptimal * 1.17);
+      }
+     
+      const timeCoef = 15 / 90; // for a path of 90 , ideal time is 15s
+      const idealTime = optimal * timeCoef;
+     
+      // Penalty for time > 20
+      if (time > idealTime) {
+        const extraTime = time - idealTime;
+        points -= Math.min((extraTime * 15) + extraTime, 1800);
+      } else {
+      points += (time * 1.23) + ((idealTime + 1 - time) * 50);
+      }
+
+      // Ensure points do not go below 50
+      return Math.max(Math.floor(points), 50);
+    }
+
+    function endGame(success) {
+      gameEnded = true;
+      clearInterval(timerInterval);
+      clearInterval(enemySpawnInterval);
+
+      renderMaze();
+     
+      let playerPoints = calculatePoints(shortestPath.length, playerPath.length, timer);
+     
+      if (success) {
+        messageEl.innerHTML = `
+          🧭 Moves: <span style="color: #1565c0;">${moveCount}</span>
+          ⏱️ Time: <span style="color: #f57c00;">${timer}s</span><br>
+          💯 Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
+          <em>Press <strong>Space</strong> to play again!</em>
+        `;
+
+      } else {
+        messageEl.innerHTML = `💀 You were caught! (hit Space to retry!)`;
+      }
+
+    }
+
+    document.addEventListener("keydown", e => {
+      e.preventDefault();
+      const { x, y } = playerPosition;
+      if (e.key === "ArrowUp") updatePlayer(x, y - 1);
+      else if (e.key === "ArrowDown") updatePlayer(x, y + 1);
+      else if (e.key === "ArrowLeft") updatePlayer(x - 1, y);
+      else if (e.key === "ArrowRight") updatePlayer(x + 1, y);
+      else if (e.key == "Space" || e.keyCode == 32  ) resetGame();
+      else if (e.key == "w") endGame(true);
+      else if (e.key == "l") endGame(false);
+      else if (e.key == "h" || e.key == "H"  ) { renderHelp = !renderHelp; renderMaze(); }
+      else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
+    });
+
+    resetGame();
+  </script>
+</body>
+</html>
