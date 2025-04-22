@@ -139,7 +139,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v23</div>
+  <div id="version-box">v25</div>
 
   <div id="message-bar"></div>
   
@@ -181,19 +181,25 @@
     let playerPath = [];
     let moveCount = 0;
     
-    const MAX_TIME = 100;
+    const MAX_TIME = 100; // game over after 100s
     let timer = 0;
     let timerInterval;
     
-    const SPAWN_INTERVAL = 10;
-    let enemySpawnInterval;
+    // Enemies config    
     let enemies = [];
-    let enemyMovementInterval;
+    let spawnInterval = 10000; // 10 seconds to start
+    const MIN_SPAWN_INTERVAL = 2000;
+    const SPAWN_DECREMENT = 1000;
+    
+    let enemyMovementInterval; // used to move the enemies
+    let spawnEnemiesInterval;
+
+    let lastSpawnTime = null; // Do not spawn until movement starts
 
     // mobile controls
     let holdInterval = null;
     let currentHeld = null;
-	  
+    
     // cheat codes
     let renderHelp = false;
     let renderOptimal = false;
@@ -366,20 +372,26 @@
       return tempMaze;
     }
 
-
+		function clearAllIntervals() {
+    
+      lastSpawnTime = null;
+      currentHeld = null;
+      
+      clearInterval(timerInterval);
+      clearInterval(holdInterval);
+      clearInterval(enemyMovementInterval);
+      clearInterval(spawnEnemiesInterval);
+    }
+    
     function resetGame() {
       if (resetProgress) return;
       resetProgress = true;
       
-      holdInterval = null;
-      currentHeld = null;
       
-      clearInterval(timerInterval);
-      clearInterval(enemySpawnInterval);
-      clearInterval(enemyMovementInterval);
+      clearAllIntervals();
       
       usedExits = new Set();
-      messageEl.innerHTML = `Moves: 0 | Time: 0s`
+      messageEl.innerHTML = `Time left: ${MAX_TIME}s`
       messageEl.style.visibility = 'visible';
       
       maze = generateMainMaze();
@@ -406,28 +418,6 @@
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
       return arr;
-    }
-
-
-    function spawnEnemy() {
-      if (gameEnded) return;
-      let x, y;
-      do {
-        x = Math.floor(Math.random() * mazeSize);
-        y = Math.floor(Math.random() * mazeSize);
-      } while (
-        maze[y][x] === 'wall' ||
-        (x === playerPosition.x && y === playerPosition.y) ||
-        enemies.some(e => e.x === x && e.y === y)
-      );
-
-      const enemy = {
-        x,
-        y,
-        path: [],
-        stepIndex: 0
-      };
-      enemies.push(enemy);
     }
 
     // Use Dijkstra’s algorithm to find a shortest path on the current maze grid
@@ -532,7 +522,7 @@
 
           // collision?
           if (enemy.x === playerPosition.x && enemy.y === playerPosition.y) {
-            endGame(false);
+            endGame(false, "you've been caught...");
           }
         }
       });
@@ -610,6 +600,54 @@
         }
       }
     }
+    
+    function spawnEnemy() {
+      if (gameEnded) return;
+      let x, y;
+      do {
+        x = Math.floor(Math.random() * mazeSize);
+        y = Math.floor(Math.random() * mazeSize);
+      } while (
+        maze[y][x] === 'wall' ||
+        (x === playerPosition.x && y === playerPosition.y) ||
+        enemies.some(e => e.x === x && e.y === y)
+      );
+
+      const enemy = { x, y, path: [], stepIndex: 0 };
+      enemies.push(enemy);
+    }
+
+    function spawnEnemies() {
+      const now = Date.now();
+
+      if (lastSpawnTime === null) return;
+
+      if (now - lastSpawnTime >= spawnInterval) {
+        spawnEnemy();
+        lastSpawnTime = now; // ✅ Update time here, not in spawnEnemy
+        spawnInterval = Math.max(spawnInterval - SPAWN_DECREMENT, MIN_SPAWN_INTERVAL);
+      }
+    }
+
+    function onPlayerFirstMove() {
+      if (lastSpawnTime === null) {
+        lastSpawnTime = Date.now(); // ✅ Initial set
+        spawnEnemieInterval = setInterval(spawnEnemies, 500);
+        enemyMovementInterval = setInterval(updateAllEnemies, 500);
+      }
+
+      timerInterval = setInterval(() => {
+        timer++;
+        const timeLeft = MAX_TIME - timer;
+        messageEl.innerHTML = `Time left ${timeLeft}s`;
+
+        if (timer >= MAX_TIME) {
+          endGame(false, "too late...");
+          return;
+        }
+      }, 1000);
+    }
+
 
     function updatePlayer(x, y) {
       if (gameEnded) return;
@@ -617,13 +655,8 @@
 
       if (!hasStarted) {
         hasStarted = true;
-        timerInterval = setInterval(() => {
-          timer++;
-          messageEl.innertHtml = `Moves: ${moveCount} | Time: ${timer}s`;
-        }, 1000);
         
-        enemySpawnInterval = setInterval(spawnEnemy, SPAWN_INTERVAL * 1000);
-        enemyMovementInterval = setInterval(updateAllEnemies, 500);
+        onPlayerFirstMove();
       }
 
       playerPosition = { x, y };
@@ -631,17 +664,12 @@
       playerPath.push({ x, y });
 
       if (enemies.some(e => e.x === x && e.y === y)) {
-        endGame(false); return;
-      }
-     
-      if (timer >= MAX_TIME) {
-      	endGame(false); return;
+        endGame(false, "you've been caught..."); return;
       }
 
       if (maze[y][x] === "exit") {
         endGame(true);
       } else {
-        messageEl.innerHTML = `Moves: ${moveCount} | Time: ${timer}s`;
         renderMaze();
       }
     }
@@ -674,11 +702,10 @@
       return Math.max(Math.floor(points), 50);
     }
 
-    function endGame(success) {
+    function endGame(success, failMessage = "boom...") {
       gameEnded = true;
-      clearInterval(timerInterval);
-      clearInterval(enemySpawnInterval);
 
+      clearAllIntervals();
       renderMaze();
       
       let playerPoints = calculatePoints(shortestPath.length, playerPath.length, timer);
@@ -691,7 +718,7 @@
         `;
 
       } else {
-        messageEl.innerHTML = `💀 You were caught! (hit Space to retry!)`;
+        messageEl.innerHTML = failMessage;
       }
 
     }
