@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +31,7 @@
     .shortpathe { background: rgba(0, 255, 255, 0.5) ; }      /* cyan */
     .shortpathf { background: rgba(238, 130, 238, 0.5) ; }    /* violet */
     .overlap { background: grey !important; }
-   
+    
     .enemy {
       background: purple !important;
       animation: pulse 1s infinite;
@@ -53,18 +54,59 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       visibility: hidden;
     }
+    /* MOBILE controls */
+    #mobile-controls {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px; /* increased spacing between up/down groups */
+    }
+
+    #mobile-controls .horizontal {
+      display: flex;
+      gap: 24px;
+    }
+
+    .arrow {
+      font-size: 64px;          /* icon size doubled */
+      padding: 32px 36px;       /* bigger touch area */
+      border: none;
+      background-color: #f0f0f0;
+      border-radius: 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      transition: transform 0.1s;
+    }
+
+    .arrow:active {
+      background-color: #d0f0d0;
+      transform: scale(0.96);   /* subtle tap effect */
+    }
+
+
 
   </style>
 </head>
 <body>
   <div id="message-bar"></div>
   <div id="maze"></div>
+  <div id="mobile-controls">
+    <button class="arrow" data-dir="up">⬆️</button>
+    <div class="horizontal">
+      <button class="arrow" data-dir="left">⬅️</button>
+      <button class="arrow" data-dir="down">⬇️</button>
+      <button class="arrow" data-dir="right">➡️</button>
+    </div>
+  </div>
 
 
   <script>
     // Maze config
-    const cellSize = 14;       // Size of each cell in pixels
-    const mazeSize = 52;      // Size of maze
+    const cellSize = 16;       // Size of each cell in pixels
+    const mazeSize = 48;      // Size of maze 
     let maze = [];
     const entry = { x: 1, y: 1 };
 
@@ -76,15 +118,15 @@
     let gameEnded = false;
     let resetProgress = false;
 
-// Player tracking
+		// Player tracking
     let playerPosition = { ...entry };
     let playerPath = [];
     let moveCount = 0;
-   
+    
     const MAX_TIME = 100;
     let timer = 0;
     let timerInterval;
-   
+    
     const SPAWN_INTERVAL = 10;
     let enemySpawnInterval;
     let enemies = [];
@@ -93,9 +135,9 @@
     // cheat codes
     let renderHelp = false;
     let renderOptimal = false;
-   
+    
     // UI elements
-    const messageEl = document.getElementById("message-bar");
+   	const messageEl = document.getElementById("message-bar");
 
     const directions = [
       { x: 0, y: -1 },
@@ -248,7 +290,7 @@
         const altPath = dijkstra(altMaze, entry, altExit);
         altPaths.push(altPath);
 
-const oddsOfCarving = 0.8;
+				const oddsOfCarving = 0.8; 
         for (const { x, y } of altPath) {
           if ((x !== entry.x || y !== entry.y) && (x !== exit.x || y !== exit.y)) {
             if (tempMaze[y][x] === "wall" && Math.random() < oddsOfCarving) {
@@ -266,18 +308,18 @@ const oddsOfCarving = 0.8;
     function resetGame() {
       if (resetProgress) return;
       resetProgress = true;
-     
-     
+      
+      
       clearInterval(timerInterval);
       clearInterval(enemySpawnInterval);
       clearInterval(enemyMovementInterval);
-     
+      
       usedExits = new Set();
       messageEl.innerHTML = `Moves: 0 | Time: 0s`
       messageEl.style.visibility = 'visible';
-     
+      
       maze = generateMainMaze();
-     
+      
       maze[entry.y][entry.x] = "entry";
       maze[exit.y][exit.x] = "exit";
       playerPosition = { ...entry };
@@ -289,10 +331,10 @@ const oddsOfCarving = 0.8;
       enemies = [];
 
       renderMaze();
-     
+      
       resetProgress = false;
     }
-   
+    
     function shuffleArray(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -433,18 +475,18 @@ const oddsOfCarving = 0.8;
 
       renderMaze();
     }
-   
+    
     function isSamePosition(point,x, y) {
       return (point && x === point.x && y === point.y);
     }
 
-   
+    
     function showAltPath(cell, x, y, path, style) {
       if (path.some(p => p.x === x && p.y === y)) {
         if (isSamePosition(exit, x, y)) return;
         if (isSamePosition(playerPosition, x, y)) return;
         if (maze[y][x] === 'wall') return;
-       
+        
         if (cell.classList.contains("playerpath")) {
           cell.classList.add("overlap");
         } else {
@@ -452,20 +494,20 @@ const oddsOfCarving = 0.8;
         }
       }
     }
-   
+    
     function renderMaze() {
       const mazeDiv = document.getElementById("maze");
       mazeDiv.innerHTML = "";
-     
+      
       mazeDiv.style.gridTemplateColumns = `repeat(${mazeSize}, ${cellSize}px)`;
       mazeDiv.style.gridTemplateRows = `repeat(${mazeSize}, ${cellSize}px)`;
 
-   
+    
       for (let y = 0; y < mazeSize; y++) {
         for (let x = 0; x < mazeSize; x++) {
           const cell = document.createElement("div");
-         
-         
+          
+          
           cell.className = "cell";
           cell.style.width = `${cellSize}px`;
           cell.style.height = `${cellSize}px`;
@@ -473,7 +515,7 @@ const oddsOfCarving = 0.8;
           if (gameEnded) {
             showAltPath(cell, x, y, playerPath, "playerpath");
           }
-         
+          
           if (gameEnded || renderHelp || renderOptimal) {
             showAltPath(cell, x, y, shortestPath, "shortestpath");
           }
@@ -498,8 +540,8 @@ const oddsOfCarving = 0.8;
           if (x === entry.x && y === entry.y) cell.classList.add("entry");
           else if (x === exit.x && y === exit.y) cell.classList.add("exit");
           else cell.classList.add(maze[y][x]);
-         
-         
+          
+          
           mazeDiv.appendChild(cell);
         }
       }
@@ -515,7 +557,7 @@ const oddsOfCarving = 0.8;
           timer++;
           messageEl.innertHtml = `Moves: ${moveCount} | Time: ${timer}s`;
         }, 1000);
-       
+        
         enemySpawnInterval = setInterval(spawnEnemy, SPAWN_INTERVAL * 1000);
         enemyMovementInterval = setInterval(updateAllEnemies, 500);
       }
@@ -529,7 +571,7 @@ const oddsOfCarving = 0.8;
       }
      
       if (timer >= MAX_TIME) {
-      endGame(false); return;
+      	endGame(false); return;
       }
 
       if (maze[y][x] === "exit") {
@@ -541,7 +583,9 @@ const oddsOfCarving = 0.8;
     }
 
     function calculatePoints(optimal, actual, time) {
-      let points = 3000;
+    
+      const maxPointsCoef = 3000 / 52; // for a maze size of 52 points  is 3000
+      let points = mazeSize * maxPointsCoef;
 
       // Penalty for actual > optimal, 100 points per 5% over
       if (actual > optimal) {
@@ -550,16 +594,16 @@ const oddsOfCarving = 0.8;
         const longPathPenalty = percentageOver / 2;
         points -= Math.min(1200, (longPathPenalty * 75)) + (deltaOptimal * 1.17);
       }
-     
+      
       const timeCoef = 15 / 90; // for a path of 90 , ideal time is 15s
       const idealTime = optimal * timeCoef;
-     
+      
       // Penalty for time > 20
       if (time > idealTime) {
         const extraTime = time - idealTime;
         points -= Math.min((extraTime * 15) + extraTime, 1800);
       } else {
-      points += (time * 1.23) + ((idealTime + 1 - time) * 50);
+      	points += (time * 1.23) + ((idealTime + 1 - time) * 50);
       }
 
       // Ensure points do not go below 50
@@ -572,9 +616,9 @@ const oddsOfCarving = 0.8;
       clearInterval(enemySpawnInterval);
 
       renderMaze();
-     
+      
       let playerPoints = calculatePoints(shortestPath.length, playerPath.length, timer);
-     
+      
       if (success) {
         messageEl.innerHTML = `
           🧭 Moves: <span style="color: #1565c0;">${moveCount}</span>
@@ -602,6 +646,21 @@ const oddsOfCarving = 0.8;
       else if (e.key == "h" || e.key == "H"  ) { renderHelp = !renderHelp; renderMaze(); }
       else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
     });
+    
+    document.querySelectorAll('.arrow').forEach(button => {
+      button.addEventListener('click', () => {
+        const direction = button.dataset.dir;
+        const keyMap = {
+          up: 'ArrowUp',
+          down: 'ArrowDown',
+          left: 'ArrowLeft',
+          right: 'ArrowRight'
+        };
+        // Create and dispatch a keyboard event to simulate key press
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+      });
+    });
+
 
     resetGame();
   </script>
