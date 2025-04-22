@@ -144,7 +144,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v33</div>
+  <div id="version-box">v35</div>
 
   <div id="message-bar"></div>
   
@@ -382,7 +382,6 @@
       spawnInterval= START_SPAWN_INTERVAL;
       nextSpawnTime = null; 
       currentHeld = null;
-      timer = 0;
       
       clearInterval(timerInterval);
       clearInterval(holdInterval);
@@ -741,8 +740,14 @@
       else if (e.key == "Space" || e.keyCode == 32  ) resetGame();
       else if (e.key == "w") endGame(true);
       else if (e.key == "l") endGame(false);
-      else if (e.key == "h" || e.key == "H"  ) { renderHelp = !renderHelp; renderMaze(); }
-      else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
+      else if (e.key == "h" || e.key == "H"  ) {
+      	renderHelp = !renderHelp; renderOptimal=false; 
+        renderMaze(); 
+        }
+      else if (e.key == "x" || e.key == "X"  ) { 
+      	renderOptimal = !renderOptimal; renderHelp = false;
+        renderMaze(); 
+      }
     });
 
     // Mobile controls
@@ -777,12 +782,10 @@
         currentHeld = null;
       };
 
-      button.addEventListener('touchstart', startHolding, { passive: false }); // 👈 allow e.preventDefault()
+      button.addEventListener('touchstart', startHolding, { passive: false });
       button.addEventListener('touchend', stopHolding);
       button.addEventListener('touchcancel', stopHolding);
     });
-
-
 
 
     document.getElementById("restart-button").addEventListener("click", () => {
