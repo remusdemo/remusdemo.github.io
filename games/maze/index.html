@@ -144,7 +144,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v29</div>
+  <div id="version-box">v33</div>
 
   <div id="message-bar"></div>
   
@@ -192,14 +192,14 @@
     
     // Enemies config    
     let enemies = [];
-    let spawnInterval = 10000; // 10 seconds to start
-    const MIN_SPAWN_INTERVAL = 2000;
-    const SPAWN_DECREMENT = 1000;
+    let spawnInterval;
+    const START_SPAWN_INTERVAL = 10;
+    const MIN_SPAWN_INTERVAL = 2;
+    const SPAWN_DECREMENT = 1;
+    let nextSpawnTime = null; // Do not spawn until movement starts
     
     let enemyMovementInterval; // used to move the enemies
     let spawnEnemiesInterval;
-
-    let lastSpawnTime = null; // Do not spawn until movement starts
 
     // mobile controls
     let holdInterval = null;
@@ -379,8 +379,10 @@
 
 		function clearAllIntervals() {
     
-      lastSpawnTime = null;
+      spawnInterval= START_SPAWN_INTERVAL;
+      nextSpawnTime = null; 
       currentHeld = null;
+      timer = 0;
       
       clearInterval(timerInterval);
       clearInterval(holdInterval);
@@ -392,7 +394,10 @@
       if (resetProgress) return;
       resetProgress = true;
       
+      hasStarted = false;
+      gameEnded = false;
       
+      moveCount = 0;
       clearAllIntervals();
       
       usedExits = new Set();
@@ -405,14 +410,9 @@
       maze[exit.y][exit.x] = "exit";
       playerPosition = { ...entry };
       playerPath = [entry];
-      moveCount = 0;
-      timer = 0;
-      hasStarted = false;
-      gameEnded = false;
       enemies = [];
 
       renderMaze();
-      
       resetProgress = false;
     }
     
@@ -625,22 +625,25 @@
     function spawnEnemies() {
       const now = Date.now();
 
-      if (lastSpawnTime === null) return;
+      if (nextSpawnTime === null) return;
+      if (enemies.length >= 20) return;
 
-      if (now - lastSpawnTime >= spawnInterval) {
+      if (timer >= nextSpawnTime) {
         spawnEnemy();
-        lastSpawnTime = now; // ✅ Update time here, not in spawnEnemy
         spawnInterval = Math.max(spawnInterval - SPAWN_DECREMENT, MIN_SPAWN_INTERVAL);
+        nextSpawnTime = timer + spawnInterval;
+        console.log("new enemy total=" +  enemies.length + " at time" + timer);
       }
     }
 
     function onPlayerFirstMove() {
-      if (lastSpawnTime === null) {
-        lastSpawnTime = Date.now(); // ✅ Initial set
+      if (nextSpawnTime === null) {
+        nextSpawnTime = spawnInterval;
         spawnEnemieInterval = setInterval(spawnEnemies, 500);
         enemyMovementInterval = setInterval(updateAllEnemies, 500);
       }
 
+      timer = 0;
       timerInterval = setInterval(() => {
         timer++;
         const timeLeft = MAX_TIME - timer;
