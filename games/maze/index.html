@@ -32,12 +32,12 @@
       aspect-ratio: 1 / 1; /* Keeps square cells */
     }
 
-    .wall { background: black; }
-    .entry { background: darkgreen; }
+    .wall { background: darkgrey; }
+    .entry { background: lightgreen; }
     .exit { background: red; }
     .player { background: blue !important; }
     .playerpath { background: lightcoral !important; }
-    .shortestpath { background: green !important; }
+    .shortestpath { background: lightgreen !important; }
     .shortpathb { background: rgba(255, 215, 0, 0.5) ; }      /* gold */
     .shortpathc { background: rgba(173, 216, 230, 0.5) ; }    /* lightblue */
     .shortpathd { background: rgba(255, 165, 0, 0.5) ; }      /* orange */
@@ -48,6 +48,7 @@
     .enemy {
       background: purple !important;
       animation: pulse 1s infinite;
+      border-radius: 50%;
     }
 
     @keyframes pulse {
@@ -55,16 +56,16 @@
       50% { opacity: 0.5; }
     }
     #message-bar {
-      margin-bottom: 20px; /* increased from 10px to 24px */
-      font-size: 20px;
+      margin-bottom: 20px; 
+      font-size: 40px;
       color: #2e7d32;
       font-weight: bold;
       background-color: #e8f5e9;
-      border: 2px solid #81c784;
+      border: 6px solid #81c784;
       padding: 12px;
       border-radius: 10px;
       text-align: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 12px rgba(0, 0, 0, 0.1);
       visibility: hidden;
     }
     /* MOBILE controls */
@@ -104,7 +105,7 @@
 
     #restart-button {
       font-size: 60px;
-      margin-top: 30px;
+      margin-top: 60px;
       padding: 20px 30px;
       background-color: #4caf50;
       color: white;
@@ -141,7 +142,7 @@
     </div>
   </div>
   <div id="restart-container">
-    <button id="restart-button">Replay</button>
+    <button id="restart-button">Reset</button>
   </div>
 
 
@@ -666,8 +667,7 @@
         messageEl.innerHTML = `
           Moves: <span style="color: #1565c0;">${moveCount}</span>
           Time: <span style="color: #f57c00;">${timer}s</span><br>
-          Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
-          <em>Press <strong>Space</strong> to play again!</em>
+          Total Points: <span style="color: #c62828;">${playerPoints}</span>
         `;
 
       } else {
