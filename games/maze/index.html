@@ -139,7 +139,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v25</div>
+  <div id="version-box">v27</div>
 
   <div id="message-bar"></div>
   
@@ -737,40 +737,43 @@
       else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
     });
 
-document.querySelectorAll('.arrow').forEach(button => {
-  const direction = button.dataset.dir;
-  const keyMap = {
-    up: 'ArrowUp',
-    down: 'ArrowDown',
-    left: 'ArrowLeft',
-    right: 'ArrowRight'
-  };
+    // Mobile controls
+    document.querySelectorAll('.arrow').forEach(button => {
+      const direction = button.dataset.dir;
+      const keyMap = {
+        up: 'ArrowUp',
+        down: 'ArrowDown',
+        left: 'ArrowLeft',
+        right: 'ArrowRight'
+      };
 
-  const startHolding = () => {
-    // Avoid starting a new interval if one is already active
-    if (currentHeld !== direction) {
-      stopHolding(); // Stop previous if different
-      currentHeld = direction;
+      const startHolding = (e) => {
+        e.preventDefault(); // ✅ Prevent double-tap zoom on mobile
 
-      // Trigger initial move
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+        if (currentHeld !== direction) {
+          stopHolding(); // Stop previous if different
+          currentHeld = direction;
 
-      holdInterval = setInterval(() => {
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
-      }, 100); // Adjust repeat rate as needed
-    }
-  };
+          // Trigger initial move
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
 
-  const stopHolding = () => {
-    if (holdInterval) clearInterval(holdInterval);
-    holdInterval = null;
-    currentHeld = null;
-  };
+          holdInterval = setInterval(() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+          }, 100); // Adjust repeat rate as needed
+        }
+      };
 
-  button.addEventListener('touchstart', startHolding);
-  button.addEventListener('touchend', stopHolding);
-  button.addEventListener('touchcancel', stopHolding);
-});
+      const stopHolding = () => {
+        if (holdInterval) clearInterval(holdInterval);
+        holdInterval = null;
+        currentHeld = null;
+      };
+
+      button.addEventListener('touchstart', startHolding, { passive: false }); // 👈 allow e.preventDefault()
+      button.addEventListener('touchend', stopHolding);
+      button.addEventListener('touchcancel', stopHolding);
+    });
+
 
 
 
