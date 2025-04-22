@@ -16,16 +16,21 @@
       overflow-x: hidden;
     }
     
-    #maze-container {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      overflow-x: auto;
-    }
-    #maze {
-      display: grid;
-      gap: 1px;
-    }
+#maze-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow-x: auto;
+}
+
+#maze {
+  display: grid;
+  gap: 1px;
+  border: 2px solid #333; /* Add border directly to the maze */
+  box-sizing: border-box;
+  border-radius: 4px; /* Optional */
+}
+
 
 
     .cell {
@@ -139,7 +144,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v27</div>
+  <div id="version-box">v29</div>
 
   <div id="message-bar"></div>
   
