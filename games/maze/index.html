@@ -704,6 +704,32 @@
       });
     });
     
+let touchInterval;
+let touchDir = null;
+
+document.querySelectorAll(".arrow").forEach(button => {
+  const dir = button.getAttribute("data-dir");
+
+  button.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // prevent accidental zooming or scrolling
+    if (touchInterval) return;
+    touchDir = dir;
+    movePlayer(touchDir); // move once immediately
+    touchInterval = setInterval(() => movePlayer(touchDir), 150); // keep moving
+  });
+
+  button.addEventListener("touchend", () => {
+    clearInterval(touchInterval);
+    touchInterval = null;
+  });
+
+  // for safety on touchcancel
+  button.addEventListener("touchcancel", () => {
+    clearInterval(touchInterval);
+    touchInterval = null;
+  });
+});
+
     document.getElementById("restart-button").addEventListener("click", () => {
       resetGame();
     });
