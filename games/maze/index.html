@@ -139,7 +139,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v21</div>
+  <div id="version-box">v23</div>
 
   <div id="message-bar"></div>
   
@@ -190,6 +190,10 @@
     let enemies = [];
     let enemyMovementInterval;
 
+    // mobile controls
+    let holdInterval = null;
+    let currentHeld = null;
+	  
     // cheat codes
     let renderHelp = false;
     let renderOptimal = false;
@@ -367,6 +371,8 @@
       if (resetProgress) return;
       resetProgress = true;
       
+      holdInterval = null;
+      currentHeld = null;
       
       clearInterval(timerInterval);
       clearInterval(enemySpawnInterval);
@@ -703,8 +709,6 @@
       else if (e.key == "h" || e.key == "H"  ) { renderHelp = !renderHelp; renderMaze(); }
       else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
     });
-    
-let holdInterval;
 
 document.querySelectorAll('.arrow').forEach(button => {
   const direction = button.dataset.dir;
@@ -715,24 +719,32 @@ document.querySelectorAll('.arrow').forEach(button => {
     right: 'ArrowRight'
   };
 
-  button.addEventListener('touchstart', () => {
-    // Immediately trigger one move
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+  const startHolding = () => {
+    // Avoid starting a new interval if one is already active
+    if (currentHeld !== direction) {
+      stopHolding(); // Stop previous if different
+      currentHeld = direction;
 
-    // Start interval to continuously trigger movement
-    holdInterval = setInterval(() => {
+      // Trigger initial move
       document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
-    }, 150); // Adjust speed (ms) as needed
-  });
 
-  button.addEventListener('touchend', () => {
-    clearInterval(holdInterval);
-  });
+      holdInterval = setInterval(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+      }, 100); // Adjust repeat rate as needed
+    }
+  };
 
-  button.addEventListener('touchcancel', () => {
-    clearInterval(holdInterval);
-  });
+  const stopHolding = () => {
+    if (holdInterval) clearInterval(holdInterval);
+    holdInterval = null;
+    currentHeld = null;
+  };
+
+  button.addEventListener('touchstart', startHolding);
+  button.addEventListener('touchend', stopHolding);
+  button.addEventListener('touchcancel', stopHolding);
 });
+
 
 
     document.getElementById("restart-button").addEventListener("click", () => {
