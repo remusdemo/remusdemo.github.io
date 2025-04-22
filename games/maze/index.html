@@ -33,7 +33,7 @@
     }
 
     .wall { background: darkgrey; }
-    .entry { background: lightgreen; }
+    .entry { background: green; }
     .exit { background: red; }
     .player { background: blue !important; }
     .playerpath { background: lightcoral !important; }
@@ -124,23 +124,22 @@
       transform: scale(0.96);
     }
 
-
 #version-box {
   position: fixed;
   top: 10px;
   right: 12px;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   padding: 6px 10px;
+  border-radius: 8px;
   opacity: 0.8;
   user-select: none;
 }
 
-
   </style>
 </head>
 <body>
-  <div id="version-box">v13</div> 
+  <div id="version-box">v15</div>
 
   <div id="message-bar"></div>
   
@@ -157,7 +156,7 @@
     </div>
   </div>
   <div id="restart-container">
-    <button id="restart-button">Reset</button>
+    <button id="restart-button">Replay</button>
   </div>
 
 
@@ -682,7 +681,7 @@
         messageEl.innerHTML = `
           Moves: <span style="color: #1565c0;">${moveCount}</span>
           Time: <span style="color: #f57c00;">${timer}s</span><br>
-          Total Points: <span style="color: #c62828;">${playerPoints}</span>
+          Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
         `;
 
       } else {
@@ -705,45 +704,36 @@
       else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
     });
     
-    document.querySelectorAll('.arrow').forEach(button => {
-      button.addEventListener('click', () => {
-        const direction = button.dataset.dir;
-        const keyMap = {
-          up: 'ArrowUp',
-          down: 'ArrowDown',
-          left: 'ArrowLeft',
-          right: 'ArrowRight'
-        };
-        // Create and dispatch a keyboard event to simulate key press
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
-      });
-    });
-    
-let touchInterval;
-let touchDir = null;
+let holdInterval;
 
-document.querySelectorAll(".arrow").forEach(button => {
-  const dir = button.getAttribute("data-dir");
+document.querySelectorAll('.arrow').forEach(button => {
+  const direction = button.dataset.dir;
+  const keyMap = {
+    up: 'ArrowUp',
+    down: 'ArrowDown',
+    left: 'ArrowLeft',
+    right: 'ArrowRight'
+  };
 
-  button.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // prevent accidental zooming or scrolling
-    if (touchInterval) return;
-    touchDir = dir;
-    movePlayer(touchDir); // move once immediately
-    touchInterval = setInterval(() => movePlayer(touchDir), 150); // keep moving
+  button.addEventListener('touchstart', () => {
+    // Immediately trigger one move
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+
+    // Start interval to continuously trigger movement
+    holdInterval = setInterval(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+    }, 300); // Adjust speed (ms) as needed
   });
 
-  button.addEventListener("touchend", () => {
-    clearInterval(touchInterval);
-    touchInterval = null;
+  button.addEventListener('touchend', () => {
+    clearInterval(holdInterval);
   });
 
-  // for safety on touchcancel
-  button.addEventListener("touchcancel", () => {
-    clearInterval(touchInterval);
-    touchInterval = null;
+  button.addEventListener('touchcancel', () => {
+    clearInterval(holdInterval);
   });
 });
+
 
     document.getElementById("restart-button").addEventListener("click", () => {
       resetGame();
