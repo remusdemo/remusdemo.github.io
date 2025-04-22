@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Maze Game</title>
   <style>
     body {
@@ -55,36 +55,38 @@
       visibility: hidden;
     }
     /* MOBILE controls */
-    #mobile-controls {
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px; /* increased spacing between up/down groups */
-    }
+#mobile-controls {
+  margin-top: 32px; /* more space above the controls */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px; /* space between rows */
+}
 
-    #mobile-controls .horizontal {
-      display: flex;
-      gap: 24px;
-    }
+#mobile-controls .horizontal {
+  display: flex;
+  gap: 28px; /* space between arrow buttons */
+}
 
-    .arrow {
-      font-size: 64px;          /* icon size doubled */
-      padding: 32px 36px;       /* bigger touch area */
-      border: none;
-      background-color: #f0f0f0;
-      border-radius: 16px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      cursor: pointer;
-      touch-action: manipulation;
-      user-select: none;
-      transition: transform 0.1s;
-    }
+.arrow {
+  font-size: 90px;        /* icon size (30% bigger) */
+  padding: 32px 34px;     /* touch-friendly padding */
+  border: none;
+  background-color: #f0f0f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.1s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent; /* Removes highlight on tap */
+}
 
-    .arrow:active {
-      background-color: #d0f0d0;
-      transform: scale(0.96);   /* subtle tap effect */
-    }
+.arrow:active {
+  background-color: #d0f0d0;
+  transform: scale(0.96);
+}
+
 
 
 
@@ -105,8 +107,8 @@
 
   <script>
     // Maze config
-    const cellSize = 16;       // Size of each cell in pixels
-    const mazeSize = 48;      // Size of maze 
+    const cellSize = 18;       // Size of each cell in pixels
+    const mazeSize = 46;      // Size of maze 
     let maze = [];
     const entry = { x: 1, y: 1 };
 
@@ -621,9 +623,9 @@
       
       if (success) {
         messageEl.innerHTML = `
-          🧭 Moves: <span style="color: #1565c0;">${moveCount}</span>
-          ⏱️ Time: <span style="color: #f57c00;">${timer}s</span><br>
-          💯 Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
+          Moves: <span style="color: #1565c0;">${moveCount}</span>
+          Time: <span style="color: #f57c00;">${timer}s</span><br>
+          Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
           <em>Press <strong>Space</strong> to play again!</em>
         `;
 
