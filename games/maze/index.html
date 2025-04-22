@@ -139,7 +139,7 @@
   </style>
 </head>
 <body>
-  <div id="version-box">v15</div>
+  <div id="version-box">v17</div>
 
   <div id="message-bar"></div>
   
@@ -722,7 +722,7 @@ document.querySelectorAll('.arrow').forEach(button => {
     // Start interval to continuously trigger movement
     holdInterval = setInterval(() => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
-    }, 300); // Adjust speed (ms) as needed
+    }, 150); // Adjust speed (ms) as needed
   });
 
   button.addEventListener('touchend', () => {
