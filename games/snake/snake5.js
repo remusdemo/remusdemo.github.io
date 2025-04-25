@@ -1,9 +1,3 @@
-
-
-	var IE, isIE = true;
-	if ( IE === undefined) isIE = false;
-
-
 	
 	function relMouseCoords(e){
 	    var mouseX, mouseY;
@@ -919,7 +913,18 @@
 	    AppSnake.appReady();
 	    AppSnake.startGame();
 
+
+		document.addEventListener("keydown", function(e) {
+		    AppSnake.onKeyDown(e);
+		});
+
+		document.addEventListener("keydown", function(e) {
+		    AppSnake.onClick(e);
+		});
+
 	});
+
+
 	var Constants;
 
 	Constants = {
