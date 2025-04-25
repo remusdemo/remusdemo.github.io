@@ -277,7 +277,7 @@
 
 	
 	/* singleton to manage the game */
-	const AppSnake = function() {
+	var AppSnake = function() {
 		
 		// APP INIT
 		var isReady=false
@@ -370,8 +370,8 @@
             currentTime ++;
 
             // check for game over
+            var isGameOver = false;
             var hPos = snake.getHeadPos();
-
 
 			// hit a wall
             /*if ( hPos.x >= appW || hPos.x < 0 ||
@@ -389,11 +389,11 @@
 
             if (!isGameOver) {
                 // eat an apple ?
-				if (appleMap.getValue(hPos.x, hPos.y)) {
-				    onAppleEaten();
-				    appleMap.deleteValue(hPos.x, hPos.y);
-				}
-
+            	if ( appleMap.getValue(hPos.x, hPos.y) ) {
+            		onAppleEaten();
+            		appleMap.deleteValue(hPos.x, hPos.y)
+            	}
+            	
                 // eat an mouse ?
                 for(j=0;j<mouseList.length;j++) {
                     var aM = mouseList[j];
@@ -484,12 +484,11 @@
             $("#snakemenu .nbmouse").html("<p>"+nbMouseEaten+"</p>");
         }
         function onAppleEaten() {
-        	console.log("apple Eaten!!!")
             pendingParts += 1;
             if (appleMap.getList.length<1) addRandomApple(1);
 
             nbAppleEaten += 1; checkLevel();
-            //$("#snakemenu .nbapple").html("<p>"+nbAppleEaten+"</p>");
+            $("#snakemenu .nbapple").html("<p>"+nbAppleEaten+"</p>");
         }
         function checkLevel() {
             var nextLevel = NB_BASE_LEVEL * Math.pow(numLevel,2);
@@ -497,6 +496,8 @@
             if (testLevel >= nextLevel) {
                 numLevel += 1;
                 restartMove(actionSpeed-10);
+                
+
             }
         }
 		function initMove() {
@@ -617,9 +618,10 @@
             var coord = {"x":Ax,"y":Ay};
         	
             if ( !snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
+            	
             	appleMap.update(Ax,Ay,"apple");
                 drawApple(coord);
-                console.log("new Apple created x=" + Ax + ",y=" + Ay);
+
             }
         }
         function addRandomMouse(n){
@@ -642,6 +644,7 @@
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
         function drawAppleList() {
+            //log("drawAppleList")
             for (i=0;i<appleList.length;i++) {
             	drawApple(appleList[i]);
                 //log(appleList[i].x+","+appleList[i].y);
@@ -678,6 +681,15 @@
         }
 		function logSnake() {
 			snake.logSnake();
+		}
+
+		function startPause() {
+			if ( !isReady ) return; 
+			if ( currentTime > 0 ) {
+				isPause = !isPause;
+			} else {
+				AppSnake.startGame();
+			}
 		}
 		function GameOver() {
 			clearInterval(idMove);
@@ -735,10 +747,6 @@
 
 		}
 
-		function togglePause = function () {
-			isPause = !isPause;
-		}
-
 		return {
 			
 			appReady : function () {
@@ -784,23 +792,23 @@
 
 			},
 			onKeyDown: function(evt) {
+
+				console.log("key down :" + evt.keyCode + " / " + evt.key);
 				// arrows key : 38, 39, 40, 37
 				// WASD : 87, 68, 83, 65
 
 				var sDir = '';
-				if		(evt.keyCode === 87) sDir = 'N';
-				else if (evt.keyCode === 68) sDir = 'E';
-				else if (evt.keyCode === 83) sDir = 'S';
-				else if (evt.keyCode === 65) sDir = 'O';
-				else if	(evt.keyCode === 38) sDir = 'N';
-				else if (evt.keyCode === 39) sDir = 'E';
-				else if (evt.keyCode === 40) sDir = 'S';
-				else if (evt.keyCode === 37) sDir = 'O';
-				else if (evt.keyCode === 32) { togglePause(); }
-				else if (evt.key === "x") { 
-					let hPos = this.snake.getHeadPos();
-					console.log("snake head x=" + hPos.x + ", y=" + hPos.y);
-				}
+				if		(evt.keyCode == 87) sDir = 'N';
+				else if (evt.keyCode == 68) sDir = 'E';
+				else if (evt.keyCode == 83) sDir = 'S';
+				else if (evt.keyCode == 65) sDir = 'O';
+				
+				else if	(evt.keyCode == 38) sDir = 'N';
+				else if (evt.keyCode == 39) sDir = 'E';
+				else if (evt.keyCode == 40) sDir = 'S';
+				else if (evt.keyCode == 37) sDir = 'O';
+				else if (evt.keyCode == 32) startPause();
+
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
 			onClick: function(e) {
@@ -818,6 +826,7 @@
 				
 
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
+				console.log(click.x + ", " + click.y + " dir :" + sDir);
 			},
             getAppSize:function() {
               return {"w":appW,"h":appH};
@@ -899,16 +908,18 @@
 	    $("#controls").show();
 	    AppSnake.appReady();
 	    AppSnake.startGame();
-	});
 
 
-	document.addEventListener("keydown", function(e) {
-	    AppSnake.onKeyDown(e);
+		document.addEventListener("keydown", function(e) {
+		    AppSnake.onKeyDown(e);
+		});
+
+		document.addEventListener("keydown", function(e) {
+		    AppSnake.onClick(e);
+		});
+
 	});
 
-	document.addEventListener("click", function(e) {
-	    AppSnake.onClick(e);
-	});
 
 	var Constants;
 
@@ -923,4 +934,5 @@
 	    }
 	}
 	Globals.Loader.load(Constants.ASSETS);
+	
 	
