@@ -373,6 +373,7 @@
             var isGameOver = false;
             var hPos = snake.getHeadPos();
 
+
 			// hit a wall
             /*if ( hPos.x >= appW || hPos.x < 0 ||
 				hPos.y >= appH || hPos.y < 0 ) {
@@ -389,10 +390,13 @@
 
             if (!isGameOver) {
                 // eat an apple ?
-            	if ( appleMap.getValue(hPos.x, hPos.y) ) {
-            		onAppleEaten();
-            		appleMap.deleteValue(hPos.x, hPos.y)
-            	}
+				let gridX = Math.floor(hPos.x / blocSize) * blocSize;
+				let gridY = Math.floor(hPos.y / blocSize) * blocSize;
+
+				if (appleMap.getValue(gridX, gridY)) {
+				    onAppleEaten();
+				    appleMap.deleteValue(gridX, gridY);
+				}
             	
                 // eat an mouse ?
                 for(j=0;j<mouseList.length;j++) {
