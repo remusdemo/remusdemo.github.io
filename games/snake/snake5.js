@@ -34,9 +34,6 @@
 	    that.deleteValue = function (x,y) {
 	    	that.map[x].splice(y,1);
 	    }
-		that.reset = function() {
-			that.map = [];
-		}
 		that.getList = function() {
 			var list = [];
 			for(var i in that.map) {
@@ -280,7 +277,7 @@
 	var AppSnake = function() {
 		
 		// APP INIT
-		var isReady=false
+		var isReady = false
 		var ctx;
 		var snake;
 		var blocSize = 13;
@@ -324,11 +321,6 @@
         	$("#snakecontainer").attr("width", appW).attr("height", appH);
         	snake.resetApp(appW,appH);
         }
-        function resetCanvas(w,h) {
-            appW = w;
-            appH = h;
-            initCanvas();
-        }
 		function actionMove() {
 			if (!isPause) onActionMove();
 		}
@@ -370,7 +362,6 @@
             currentTime ++;
 
             // check for game over
-            var isGameOver = false;
             var hPos = snake.getHeadPos();
 
 			// hit a wall
@@ -383,13 +374,12 @@
             if (!isGameOver) {
                 if ( snake.isHeadOnBody() ) {
                     GameOver();
-                    isGameOver = true;
                 }
             }
 
             if (!isGameOver) {
                 // eat an apple ?
-            	if ( appleMap.getValue(hPos.x, hPos.y) ) {
+            	if (appleMap.getValue(hPos.x, hPos.y) ) {
             		onAppleEaten();
             		appleMap.deleteValue(hPos.x, hPos.y)
             	}
@@ -496,8 +486,6 @@
             if (testLevel >= nextLevel) {
                 numLevel += 1;
                 restartMove(actionSpeed-10);
-                
-
             }
         }
 		function initMove() {
@@ -617,13 +605,15 @@
             var Ay = getRandom(0,(appH/blocSize)-1)*blocSize;
             var coord = {"x":Ax,"y":Ay};
         	
+        	console.log("apple x=" + Ax + ", y="+ Ay);
+
             if ( !snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
             	
             	appleMap.update(Ax,Ay,"apple");
                 drawApple(coord);
-
             }
         }
+
         function addRandomMouse(n){
         	
         	if ( n < 1 ) return;
@@ -685,16 +675,20 @@
 
 		function startPause() {
 			if ( !isReady ) return; 
-			if ( currentTime > 0 ) {
-				isPause = !isPause;
-			} else {
+
+			if (currentTime == 0) {
 				AppSnake.startGame();
+				return;
 			}
+			isPause = !isPause;
+			console.log("new isPause value=" + isPause);
 		}
 		function GameOver() {
 			clearInterval(idMove);
+
 			idMove = 0;
 			currentTime = 0;
+            isGameOver = true;
 
 			var img = Globals.Loader.getAsset('gameover');
 			
@@ -758,10 +752,13 @@
 				$("#snakecontainer").attr("width", appW).attr("height", appH);
 			},
 			startGame: function() {
+				isGameOver = false;
+
                 appleList = [];
                 mouseList = [];
                 
-                appleMap.reset();
+				appleMap = new GridMap();
+				mouseMap = new GridMap();
 
 				ctx.clearRect(0, 0, appW, appH);
 
@@ -783,7 +780,8 @@
 
                 // init snake
                 snake = Snake(blocSize,appW,appH,6);
-                addRandomApple(1);addRandomMouse(1);
+                addRandomApple(1);
+                addRandomMouse(1);
                 
                 initCanvas();
 
@@ -793,7 +791,7 @@
 			},
 			onKeyDown: function(evt) {
 
-				console.log("key down :" + evt.keyCode + " / " + evt.key);
+				
 				// arrows key : 38, 39, 40, 37
 				// WASD : 87, 68, 83, 65
 
@@ -808,6 +806,10 @@
 				else if (evt.keyCode == 40) sDir = 'S';
 				else if (evt.keyCode == 37) sDir = 'O';
 				else if (evt.keyCode == 32) startPause();
+				else if (evt.key == "x") {
+					let hPos = snake.getHeadPos();
+					console.log("snakeHead x=" + hPos.x + ", y="+hPos.y);
+				}
 
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
@@ -826,7 +828,6 @@
 				
 
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
-				console.log(click.x + ", " + click.y + " dir :" + sDir);
 			},
             getAppSize:function() {
               return {"w":appW,"h":appH};
@@ -925,14 +926,13 @@
 
 	Constants = {
 	    ASSETS: {
-	        snakehead: '/games/snake/snakehead.png',
-	        mouse1: '/games/snake/mouse1.png',
-	        mouse2: '/games/snake/mouse2.png',
-	        apple: '/games/snake/apple.png',
-	        arrowup: '/games/snake/arrowup.png',
-	        gameover: '/games/snake/game_over.jpg',
+	        snakehead: 'snakehead.png',
+	        mouse1: 'mouse1.png',
+	        mouse2: 'mouse2.png',
+	        apple: 'apple.png',
+	        arrowup: 'arrowup.png',
+	        gameover: 'game_over.jpg',
 	    }
 	}
 	Globals.Loader.load(Constants.ASSETS);
-	
 	
