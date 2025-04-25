@@ -734,14 +734,15 @@
 			
 
 		}
-		
+
+		function togglePause = function () {
+			isPause = !isPause;
+		}
+
 		return {
 			
 			appReady : function () {
 				isReady = true;
-			},
-			togglePause : function () {
-				isPause = !isPause;
 			},
 			setApp:function(id){
 				var app = $("#"+id);
