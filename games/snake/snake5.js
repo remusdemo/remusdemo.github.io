@@ -924,12 +924,12 @@
 
 	Constants = {
 	    ASSETS: {
-	        snakehead: '/snake5/snakehead.png',
-	        mouse1: '/snake5/mouse1.png',
-	        mouse2: '/snake5/mouse2.png',
-	        apple: '/snake5/apple.png',
-	        arrowup: '/snake5/arrowup.png',
-	        gameover: '/snake5/game_over.jpg',
+	        snakehead: '/snake/snakehead.png',
+	        mouse1: '/snake/mouse1.png',
+	        mouse2: '/snake/mouse2.png',
+	        apple: '/snake/apple.png',
+	        arrowup: '/snake/arrowup.png',
+	        gameover: '/snake/game_over.jpg',
 	    }
 	}
 	Globals.Loader.load(Constants.ASSETS);
