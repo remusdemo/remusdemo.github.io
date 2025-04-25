@@ -279,31 +279,48 @@
 	/* singleton to manage the game */
 	let AppSnake = function() {
 		
+		const blocSize = 13;
+        const NB_BASE_LEVEL = 3;
+        const INIT_SPEED = 500
+		const appW = 468;
+		const appH = 299;
+        const arrowSize = 80;
+
+        const listBodyColor = ['rgb(124,213,64)','rgb(176,212,248)','rgb(62,165,248)','rgb(30,100,171)','rgb(246,165,245)'
+        ,'rgb(249,102,176)','rgb(241,49,49)'];
+
 		// APP INIT
-		let isReady=false
 		let ctx;
+		let app
+
+		let isReady=false
 		let snake;
-		let blocSize = 13;
 		let isPause = false;
-		let appW = 468;
-		let appH = 299;
 		let currentTime = 0;
 		let idMove = 0;
 		let sMoveAction = "";
         let cycle1000 = 0;
         let cycle250 = 0;
 
+        // init game variables
+        let actionSpeed = INIT_SPEED;
+		let cycle1000 = 0;
+		let cycle250 = 0;
+        let numLevel = 1;
+        let nbAppleEaten = 0;
+        let nbMouseEaten = 0;
+        let pendingParts = 0;
+		let sMoveAction = "";
+		let currentTime = 0;
+
         let appleList = [];
         let mouseList = [];
-        let listBodyColor = ['rgb(124,213,64)','rgb(176,212,248)','rgb(62,165,248)','rgb(30,100,171)','rgb(246,165,245)'
-        ,'rgb(249,102,176)','rgb(241,49,49)'];
         let nbBodyColor = listBodyColor.length;
 
-        let NB_BASE_LEVEL = 3;
+
         let pendingParts = 0;
         let nbAppleEaten = 0;
         let nbMouseEaten = 0;
-        let INIT_SPEED = 150
 		let actionSpeed = 0;
         let numLevel = 1;
         let isGameOver = false;
@@ -311,8 +328,7 @@
         let appleMap = new GridMap();
         let mouseMap = new GridMap();
         
-        let arrowSize = 80;
-        let controlPos = {
+        const controlPos = {
 			u:{x:appW/2-arrowSize/2,y:20} , 
 			r:{x:appW-20-arrowSize,y:appH/2-arrowSize/2} , 
 			d:{x:appW/2-arrowSize/2,y:appH-20-arrowSize} , 
@@ -337,7 +353,7 @@
             cycle1000 ++;
 			cycle250 ++;
 
-            let endCycle1000 = Math.floor(1000/actionSpeed);
+            endCycle1000 = Math.floor(1000/actionSpeed);
             if ( cycle1000 == endCycle1000  ) {
                 
 				//snake.logSnake();
@@ -350,7 +366,7 @@
 				let numMouse = Math.floor( getRandom(1,20)/20 );
 				addRandomMouse(numMouse);
             }
-            let endCycle250 = Math.floor(250/actionSpeed);
+            endCycle250 = Math.floor(250/actionSpeed);
 			if ( cycle250 == endCycle250  ) {
 				cycle250 = 0;
 				// move mice
@@ -370,7 +386,8 @@
             currentTime ++;
 
             // check for game over
-            let isGameOver = false;
+            isGameOver = false;
+
             let hPos = snake.getHeadPos();
 
 
@@ -493,7 +510,7 @@
             //$("#snakemenu .nbapple").html("<p>"+nbAppleEaten+"</p>");
         }
         function checkLevel() {
-            let nextLevel = NB_BASE_LEVEL * Math.pow(numLevel,2);
+            nextLevel = NB_BASE_LEVEL * Math.pow(numLevel,2);
             let testLevel = nbAppleEaten + nbMouseEaten*4;
             if (testLevel >= nextLevel) {
                 numLevel += 1;
@@ -515,7 +532,7 @@
 		   log("bip");
 		}
 		function showSnake() {
-			let snakeParts = snake.getParts();
+			snakeParts = snake.getParts();
 			for(j=snakeParts.length-1;j>=0;j--) drawSnakePart(j,snakeParts[j]) ;
 		}
         function getRotationObj(rot,x,y,imgW,imgH) {
@@ -573,11 +590,11 @@
 			}
 		}
         function drawPartBody(part) {
-
             let iColor = Math.min(nbBodyColor,numLevel)
             //drawBall(part,listBodyColor[iColor-1]);
             drawSquare(part,listBodyColor[0]);
         }
+
         function drawBall(coord,color) {
             let mid = blocSize/2;
             let ballSize = blocSize/2.2;
@@ -748,8 +765,6 @@
 
 
 			ctx.globalAlpha = 1;
-			
-
 		}
 
 		return {
@@ -758,35 +773,24 @@
 				isReady = true;
 			},
 			setApp:function(id){
-				let app = $("#"+id);
+				app = $("#"+id);
 				ctx = app[0].getContext("2d");
 				$("#snakecontainer").attr("width", appW).attr("height", appH);
 			},
 			startGame: function() {
-                let = appleList = [];
-                let = mouseList = [];
+                appleList = [];
+                mouseList = [];
                 
                 appleMap.reset();
 
 				ctx.clearRect(0, 0, appW, appH);
-
-                // init game variables
-                let actionSpeed = INIT_SPEED;
-				let cycle1000 = 0;
-				let cycle250 = 0;
-                let numLevel = 1;
-                let nbAppleEaten = 0;
-                let nbMouseEaten = 0;
-                let pendingParts = 0;
-				let sMoveAction = "";
-				let currentTime = 0;
 
                 // init menu
                 //$("#snakemenu .nbapple").html("<p>0</p>");
                 //$("#snakemenu .nbmouse").html("<p>0</p>");
 
                 // init snake
-                let = snake = Snake(blocSize,appW,appH,6);
+                snake = Snake(blocSize,appW,appH,6);
                 addRandomApple(1);addRandomMouse(1);
                 
                 initCanvas();
@@ -838,7 +842,7 @@
 		};
 		
 	}(); 
-	let Loader;
+	const Loader;
 
 	Loader = (function() {
 
@@ -900,7 +904,7 @@
 
 	})();
 
-	let Globals;
+	const Globals;
 
 	Globals = {
 	  Loader: new Loader()
@@ -925,9 +929,7 @@
 	});
 
 
-	let Constants;
-
-	Constants = {
+	const Constants = {
 	    ASSETS: {
 	        snakehead: '/games/snake/snakehead.png',
 	        mouse1: '/games/snake/mouse1.png',
