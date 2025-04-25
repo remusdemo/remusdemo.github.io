@@ -682,15 +682,20 @@
 		}
 
 		function startPause() {
-			console.log("start pause isReady=" + isReady + " isPause=" + isPause);
-			if (!isReady) return; 
+			if (!isReady) {
+				return; 
+			}
+
+			console.log("startPause isReady=" + isReady + " isPause=" + isPause);
+			
 			if ( currentTime > 0 ) {
 				isPause = !isPause;
-				console.log("start pause newValue=" + isPause);
+				console.log("startPause newValue=" + isPause);
 			} else {
 				AppSnake.startGame();
 			}
 		}
+
 		function GameOver() {
 			clearInterval(idMove);
 			idMove = 0;
