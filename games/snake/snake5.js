@@ -793,7 +793,7 @@
 			},
 			onKeyDown: function(evt) {
 
-				
+				console.log("key down :" + evt.keyCode + " / " + evt.key);
 				// arrows key : 38, 39, 40, 37
 				// WASD : 87, 68, 83, 65
 
