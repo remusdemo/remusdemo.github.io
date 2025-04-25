@@ -358,7 +358,7 @@
 			}
 
             // clear all
-            ctx.clearRect(0, 0, appW, appH);
+            if (ctx) ctx.clearRect(0, 0, appW, appH);
             
 			if (sMoveAction != "") {
 				snake.addPivotToParts(currentTime,sMoveAction);
@@ -771,16 +771,15 @@
 				ctx.clearRect(0, 0, appW, appH);
 
                 // init game variables
-                let isPause = false;
-                let = actionSpeed = INIT_SPEED;
-				let = cycle1000 = 0;
-				let = cycle250 = 0;
-                let = numLevel = 1;
-                let = nbAppleEaten = 0;
-                let = nbMouseEaten = 0;
-                let = pendingParts = 0;
-				let = sMoveAction = "";
-				let = currentTime = 0;
+                let actionSpeed = INIT_SPEED;
+				let cycle1000 = 0;
+				let cycle250 = 0;
+                let numLevel = 1;
+                let nbAppleEaten = 0;
+                let nbMouseEaten = 0;
+                let pendingParts = 0;
+				let sMoveAction = "";
+				let currentTime = 0;
 
                 // init menu
                 //$("#snakemenu .nbapple").html("<p>0</p>");
