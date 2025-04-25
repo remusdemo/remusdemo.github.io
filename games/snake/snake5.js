@@ -682,6 +682,7 @@
 		}
 
 		function startPause() {
+			console.log("start pause");
 			if (!isReady) return; 
 			if ( currentTime > 0 ) {
 				isPause = !isPause;
@@ -802,7 +803,7 @@
 				else if (evt.keyCode === 39) sDir = 'E';
 				else if (evt.keyCode === 40) sDir = 'S';
 				else if (evt.keyCode === 37) sDir = 'O';
-				else if (evt.keyCode === 32) { AppSnake.startPause(); }
+				else if (evt.keyCode === 32) { startPause(); }
 ``
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
