@@ -657,10 +657,6 @@
         }
         function drawMouse(mouse) {
 
-			if (isIE) {
-				drawBigBall(mouse,"#BDBDBA"); return;
-			}
-
             var num = Math.floor( getRandom(1,2)/2 )+1;
             var img = Globals.Loader.getAsset('mouse'+num);
 
