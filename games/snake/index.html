@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset='utf-8' />
+        <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+        <meta name="description" content="Me : all about me" />
+        
+        <link rel="stylesheet" type="text/css" media="screen" href="/css/stylesheet.css">
+        
+        <title>Snake5 - Remylab</title>
+        
+        <link href="snake5.css" rel="stylesheet" type="text/css" />
+        
+        <!--[if lt IE 9]><script type="text/javascript" src="/js/css3-mediaqueries.js"></script><![endif]-->
+        <script type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+        
+        
+        <script type="text/javascript" src="snake5.js"></script>
+        <script type="text/javascript">
+        $(document).ready(function(){
+        	
+        	AppSnake.setApp("snakecontainer");
+    
+            $(document).bind('keydown',AppSnake.onKeyDown);
+            $("#snakecontainer").bind('click',AppSnake.onClick);
+    
+        });
+        </script>
+
+        <script type="text/javascript" src="/js/ga.js"></script>
+        
+        <style type="text/css">
+            body * {
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            }
+            .inner {
+                padding: 20px 0 20px 0;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <!-- HEADER -->
+        <div id="header_wrap" class="outer">
+            <header class="inner">
+                <a id="forkme_banner" href="https://github.com/remylab/snake5">Fork Me on GitHub</a>
+                
+                <h1 id="project_title">Snake5</h1>
+                <h2 id="project_tagline">the old school atari snake game</h2>
+            </header>
+        </div>
+        
+        <!-- MAIN CONTENT -->
+        <div id="main_content_wrap" class="outer">
+    
+            <nav id="breadcrumb" class="inner">
+                <ul>
+                    <li class="first"><a href="/">remylab</a></li>
+                    <li>snake5</li>
+                </ul>
+            </nav>
+            
+            <section id="main_content" class="inner">
+
+            
+                <div id="controls" style="display:none;">
+                    <a href="#" onclick="AppSnake.startGame();">START (WASD start/pause = space bar)</a>
+                </div>
+                
+                <!-- THE GAME -->
+                <div id="appsnake">
+            
+                    <canvas id="snakecontainer"></canvas>
+                </div>
+    
+            </section>
+            
+        </div>
+        
+        
+        <!-- FOOTER  -->
+        <div id="footer_wrap" class="outer">
+            <footer class="inner">
+                <p class="copyright">Maintained by <a href="https://github.com/remylab">Rémy Elazare</a>
+                <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+            </footer>
+        </div>
+    
+    </body>
+</html>
