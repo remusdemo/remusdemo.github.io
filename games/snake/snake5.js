@@ -826,7 +826,6 @@
 				
 
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
-				console.log(click.x + ", " + click.y + " dir :" + sDir);
 			},
             getAppSize:function() {
               return {"w":appW,"h":appH};
