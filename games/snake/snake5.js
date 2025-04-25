@@ -277,7 +277,7 @@
 
 	
 	/* singleton to manage the game */
-	var AppSnake = function() {
+	const AppSnake = function() {
 		
 		// APP INIT
 		var isReady=false
@@ -370,7 +370,6 @@
             currentTime ++;
 
             // check for game over
-            var isGameOver = false;
             var hPos = snake.getHeadPos();
 
 
@@ -680,17 +679,6 @@
 		function logSnake() {
 			snake.logSnake();
 		}
-
-		function startPause() {
-			console.log("start pause isReady=" + this.isReady + " isPause=" + this.isPause);
-			if (!this.isReady) return; 
-			if ( currentTime > 0 ) {
-				this.isPause = !this.isPause;
-				console.log("start pause newValue=" + this.isPause);
-			} else {
-				AppSnake.startGame();
-			}
-		}
 		function GameOver() {
 			clearInterval(idMove);
 			idMove = 0;
@@ -746,11 +734,14 @@
 			
 
 		}
-
+		
 		return {
 			
 			appReady : function () {
 				isReady = true;
+			},
+			togglePause : function () {
+				isPause = !isPause;
 			},
 			setApp:function(id){
 				var app = $("#"+id);
@@ -804,12 +795,11 @@
 				else if (evt.keyCode === 39) sDir = 'E';
 				else if (evt.keyCode === 40) sDir = 'S';
 				else if (evt.keyCode === 37) sDir = 'O';
-				else if (evt.keyCode === 32) { startPause(); }
+				else if (evt.keyCode === 32) { togglePause(); }
 				else if (evt.key === "x") { 
 					let hPos = this.snake.getHeadPos();
 					console.log("snake head x=" + hPos.x + ", y=" + hPos.y);
 				}
-``
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
 			onClick: function(e) {
@@ -908,18 +898,16 @@
 	    $("#controls").show();
 	    AppSnake.appReady();
 	    AppSnake.startGame();
-
-
-		document.addEventListener("keydown", function(e) {
-		    AppSnake.onKeyDown(e);
-		});
-
-		document.addEventListener("click", function(e) {
-		    AppSnake.onClick(e);
-		});
-
 	});
 
+
+	document.addEventListener("keydown", function(e) {
+	    AppSnake.onKeyDown(e);
+	});
+
+	document.addEventListener("click", function(e) {
+	    AppSnake.onClick(e);
+	});
 
 	var Constants;
 
