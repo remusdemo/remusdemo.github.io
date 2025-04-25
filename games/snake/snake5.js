@@ -682,11 +682,11 @@
 		}
 
 		function startPause() {
-			console.log("start pause isReady=" + isReady + " isPause=" + isPause);
-			if (!isReady) return; 
+			console.log("start pause isReady=" + this.isReady + " isPause=" + this.isPause);
+			if (!this.isReady) return; 
 			if ( currentTime > 0 ) {
-				isPause = !isPause;
-				console.log("start pause newValue=" + isPause);
+				this.isPause = !this.isPause;
+				console.log("start pause newValue=" + this.isPause);
 			} else {
 				AppSnake.startGame();
 			}
@@ -805,6 +805,10 @@
 				else if (evt.keyCode === 40) sDir = 'S';
 				else if (evt.keyCode === 37) sDir = 'O';
 				else if (evt.keyCode === 32) { startPause(); }
+				else if (evt.key === "x") { 
+					let hPos = this.snake.getHeadPos();
+					console.log("snake head x=" + hPos.x + ", y=" + hPos.y);
+				}
 ``
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
