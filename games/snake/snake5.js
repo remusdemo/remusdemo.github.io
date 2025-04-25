@@ -493,7 +493,7 @@
             if (appleMap.getList.length<1) addRandomApple(1);
 
             nbAppleEaten += 1; checkLevel();
-            $("#snakemenu .nbapple").html("<p>"+nbAppleEaten+"</p>");
+            //$("#snakemenu .nbapple").html("<p>"+nbAppleEaten+"</p>");
         }
         function checkLevel() {
             var nextLevel = NB_BASE_LEVEL * Math.pow(numLevel,2);
@@ -501,8 +501,6 @@
             if (testLevel >= nextLevel) {
                 numLevel += 1;
                 restartMove(actionSpeed-10);
-                
-
             }
         }
 		function initMove() {
@@ -623,10 +621,8 @@
             var coord = {"x":Ax,"y":Ay};
         	
             if ( !snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
-            	
             	appleMap.update(Ax,Ay,"apple");
                 drawApple(coord);
-
             }
         }
         function addRandomMouse(n){
@@ -801,16 +797,16 @@
 				// WASD : 87, 68, 83, 65
 
 				var sDir = '';
-				if		(evt.keyCode == 87) sDir = 'N';
-				else if (evt.keyCode == 68) sDir = 'E';
-				else if (evt.keyCode == 83) sDir = 'S';
-				else if (evt.keyCode == 65) sDir = 'O';
+				if		(evt.keyCode === 87) sDir = 'N';
+				else if (evt.keyCode === 68) sDir = 'E';
+				else if (evt.keyCode === 83) sDir = 'S';
+				else if (evt.keyCode === 65) sDir = 'O';
 				
-				else if	(evt.keyCode == 38) sDir = 'N';
-				else if (evt.keyCode == 39) sDir = 'E';
-				else if (evt.keyCode == 40) sDir = 'S';
-				else if (evt.keyCode == 37) sDir = 'O';
-				else if (evt.keyCode == 32) startPause();
+				else if	(evt.keyCode === 38) sDir = 'N';
+				else if (evt.keyCode === 39) sDir = 'E';
+				else if (evt.keyCode === 40) sDir = 'S';
+				else if (evt.keyCode === 37) sDir = 'O';
+				else if (evt.keyCode === 32) { startPause(); }
 
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
