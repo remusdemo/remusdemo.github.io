@@ -390,14 +390,14 @@
 
             if (!isGameOver) {
                 // eat an apple ?
-				let gridX = Math.floor(hPos.x / blocSize) * blocSize;
-				let gridY = Math.floor(hPos.y / blocSize) * blocSize;
-
-				if (appleMap.getValue(gridX, gridY)) {
+				if (appleMap.getValue(hPos.x, hPos.y)) {
 				    onAppleEaten();
-				    appleMap.deleteValue(gridX, gridY);
+				    appleMap.deleteValue(hPos.x, hPos.y);
+				} else {
+					console.log("Snake head:", hPos.x, hPos.y);
+					console.log("Apple at:", appleMap.getList());
 				}
-            	
+
                 // eat an mouse ?
                 for(j=0;j<mouseList.length;j++) {
                     var aM = mouseList[j];
@@ -488,6 +488,7 @@
             $("#snakemenu .nbmouse").html("<p>"+nbMouseEaten+"</p>");
         }
         function onAppleEaten() {
+        	console.log("apple Eaten!!!")
             pendingParts += 1;
             if (appleMap.getList.length<1) addRandomApple(1);
 
@@ -796,8 +797,6 @@
 
 			},
 			onKeyDown: function(evt) {
-
-				console.log("key down :" + evt.keyCode + " / " + evt.key);
 				// arrows key : 38, 39, 40, 37
 				// WASD : 87, 68, 83, 65
 
@@ -917,7 +916,7 @@
 		    AppSnake.onKeyDown(e);
 		});
 
-		document.addEventListener("keydown", function(e) {
+		document.addEventListener("click", function(e) {
 		    AppSnake.onClick(e);
 		});
 
