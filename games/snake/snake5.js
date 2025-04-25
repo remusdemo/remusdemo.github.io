@@ -393,9 +393,6 @@
 				if (appleMap.getValue(hPos.x, hPos.y)) {
 				    onAppleEaten();
 				    appleMap.deleteValue(hPos.x, hPos.y);
-				} else {
-					console.log("Snake head:", hPos.x, hPos.y);
-					console.log("Apple at:", appleMap.getList());
 				}
 
                 // eat an mouse ?
@@ -685,7 +682,7 @@
 		}
 
 		function startPause() {
-			if ( !isReady ) return; 
+			if (!isReady) return; 
 			if ( currentTime > 0 ) {
 				isPause = !isPause;
 			} else {
@@ -801,13 +798,12 @@
 				else if (evt.keyCode === 68) sDir = 'E';
 				else if (evt.keyCode === 83) sDir = 'S';
 				else if (evt.keyCode === 65) sDir = 'O';
-				
 				else if	(evt.keyCode === 38) sDir = 'N';
 				else if (evt.keyCode === 39) sDir = 'E';
 				else if (evt.keyCode === 40) sDir = 'S';
 				else if (evt.keyCode === 37) sDir = 'O';
-				else if (evt.keyCode === 32) { startPause(); }
-
+				else if (evt.keyCode === 32) { AppSnake.startPause(); }
+``
 				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
 			},
 			onClick: function(e) {
