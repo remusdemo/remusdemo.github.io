@@ -620,6 +620,7 @@
             if ( !snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
             	appleMap.update(Ax,Ay,"apple");
                 drawApple(coord);
+                console.log("new Apple created x=" + Ax + ",y=" + Ay);
             }
         }
         function addRandomMouse(n){
@@ -642,7 +643,6 @@
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
         function drawAppleList() {
-            //log("drawAppleList")
             for (i=0;i<appleList.length;i++) {
             	drawApple(appleList[i]);
                 //log(appleList[i].x+","+appleList[i].y);
@@ -682,10 +682,11 @@
 		}
 
 		function startPause() {
-			console.log("start pause");
+			console.log("start pause isReady=" + isReady + " isPause=" + isPause);
 			if (!isReady) return; 
 			if ( currentTime > 0 ) {
 				isPause = !isPause;
+				console.log("start pause newValue=" + isPause);
 			} else {
 				AppSnake.startGame();
 			}
