@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,62 +10,166 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 20px;
+      margin: 5vw;
+      box-sizing: border-box;
+      max-width: 100vw;
+      overflow-x: hidden;
     }
-    #maze {
-      display: grid;
-      gap: 1px;
-    }
+    
+#maze-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow-x: auto;
+}
+
+#maze {
+  display: grid;
+  gap: 1px;
+  border: 2px solid #333; /* Add border directly to the maze */
+  box-sizing: border-box;
+  border-radius: 4px; /* Optional */
+}
+
+
+
     .cell {
-      border: 1px solid #ccc;
+      aspect-ratio: 1 / 1; /* Keeps square cells */
     }
-    .wall { background: black; }
-    .entry { background: darkgreen; }
+
+    .wall { background: darkgrey; }
+    .entry { background: green; }
     .exit { background: red; }
     .player { background: blue !important; }
     .playerpath { background: lightcoral !important; }
-    .shortestpath { background: green !important; }
+    .shortestpath { background: lightgreen !important; }
     .shortpathb { background: rgba(255, 215, 0, 0.5) ; }      /* gold */
     .shortpathc { background: rgba(173, 216, 230, 0.5) ; }    /* lightblue */
     .shortpathd { background: rgba(255, 165, 0, 0.5) ; }      /* orange */
     .shortpathe { background: rgba(0, 255, 255, 0.5) ; }      /* cyan */
     .shortpathf { background: rgba(238, 130, 238, 0.5) ; }    /* violet */
     .overlap { background: grey !important; }
-   
+    
     .enemy {
-      background: purple !important;
+      background: pink !important;
       animation: pulse 1s infinite;
+      border-radius: 50%;
     }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+      50% { opacity: 0.8 }
     }
     #message-bar {
-      margin-bottom: 20px; /* increased from 10px to 24px */
-      font-size: 20px;
+      margin-bottom: 20px; 
+      font-size: 40px;
       color: #2e7d32;
       font-weight: bold;
       background-color: #e8f5e9;
-      border: 2px solid #81c784;
+      border: 6px solid #81c784;
       padding: 12px;
       border-radius: 10px;
       text-align: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 12px rgba(0, 0, 0, 0.1);
       visibility: hidden;
     }
+    /* MOBILE controls */
+    #mobile-controls {
+      margin-top: 32px; /* more space above the controls */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px; /* space between rows */
+    }
+
+    #mobile-controls .horizontal {
+      display: flex;
+      gap: 28px; /* space between arrow buttons */
+    }
+
+    .arrow {
+      font-size:90px;   
+      padding: 34px 34px; 
+      border: none;
+      background-color: #f0f0f0;
+      border-radius: 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      transition: transform 0.1s;
+    }
+
+    .arrow:active {
+      background-color: #d0f0d0;
+      transform: scale(0.96);
+    }
+    #restart-container {
+      margin-top: 24px;
+    }
+
+    #restart-button {
+      font-size: 60px;
+      margin-top: 60px;
+      padding: 20px 30px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    #restart-button:hover {
+      background-color: #43a047;
+    }
+
+    #restart-button:active {
+      transform: scale(0.96);
+    }
+
+#version-box {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 8px;
+  opacity: 0.8;
+  user-select: none;
+}
 
   </style>
 </head>
 <body>
+  <div id="version-box">v36</div>
+
   <div id="message-bar"></div>
-  <div id="maze"></div>
+  
+  <div id="maze-container">
+    <div id="maze"></div>
+  </div>
+  
+  <div id="mobile-controls">
+    <button class="arrow" data-dir="up">⬆️</button>
+    <div class="horizontal">
+      <button class="arrow" data-dir="left">⬅️</button>
+      <button class="arrow" data-dir="down">⬇️</button>
+      <button class="arrow" data-dir="right">➡️</button>
+    </div>
+  </div>
+  <div id="restart-container">
+    <button id="restart-button">Replay</button>
+  </div>
+
 
 
   <script>
     // Maze config
-    const cellSize = 14;       // Size of each cell in pixels
-    const mazeSize = 52;      // Size of maze
+    const cellSize = 16;       // Size of each cell in pixels
+    const mazeSize = 44;      // Size of maze 
     let maze = [];
     const entry = { x: 1, y: 1 };
 
@@ -76,26 +181,36 @@
     let gameEnded = false;
     let resetProgress = false;
 
-// Player tracking
+		// Player tracking
     let playerPosition = { ...entry };
     let playerPath = [];
     let moveCount = 0;
-   
-    const MAX_TIME = 100;
+    
+    const MAX_TIME = 100; // game over after 100s
     let timer = 0;
     let timerInterval;
-   
-    const SPAWN_INTERVAL = 10;
-    let enemySpawnInterval;
+    
+    // Enemies config    
     let enemies = [];
-    let enemyMovementInterval;
+    let spawnInterval;
+    const START_SPAWN_INTERVAL = 10;
+    const MIN_SPAWN_INTERVAL = 2;
+    const SPAWN_DECREMENT = 1;
+    let nextSpawnTime = null; // Do not spawn until movement starts
+    
+    let enemyMovementInterval; // used to move the enemies
+    let spawnEnemiesInterval;
 
+    // mobile controls
+    let holdInterval = null;
+    let currentHeld = null;
+    
     // cheat codes
     let renderHelp = false;
     let renderOptimal = false;
-   
+    
     // UI elements
-    const messageEl = document.getElementById("message-bar");
+   	const messageEl = document.getElementById("message-bar");
 
     const directions = [
       { x: 0, y: -1 },
@@ -248,7 +363,7 @@
         const altPath = dijkstra(altMaze, entry, altExit);
         altPaths.push(altPath);
 
-const oddsOfCarving = 0.8;
+				const oddsOfCarving = 0.8; 
         for (const { x, y } of altPath) {
           if ((x !== entry.x || y !== entry.y) && (x !== exit.x || y !== exit.y)) {
             if (tempMaze[y][x] === "wall" && Math.random() < oddsOfCarving) {
@@ -262,37 +377,44 @@ const oddsOfCarving = 0.8;
       return tempMaze;
     }
 
-
+		function clearAllIntervals() {
+    
+      spawnInterval= START_SPAWN_INTERVAL;
+      nextSpawnTime = null; 
+      currentHeld = null;
+      
+      clearInterval(timerInterval);
+      clearInterval(holdInterval);
+      clearInterval(enemyMovementInterval);
+      clearInterval(spawnEnemiesInterval);
+    }
+    
     function resetGame() {
       if (resetProgress) return;
       resetProgress = true;
-     
-     
-      clearInterval(timerInterval);
-      clearInterval(enemySpawnInterval);
-      clearInterval(enemyMovementInterval);
-     
+      
+      hasStarted = false;
+      gameEnded = false;
+      
+      moveCount = 0;
+      clearAllIntervals();
+      
       usedExits = new Set();
-      messageEl.innerHTML = `Moves: 0 | Time: 0s`
+      messageEl.innerHTML = `Time left: ${MAX_TIME}s`
       messageEl.style.visibility = 'visible';
-     
+      
       maze = generateMainMaze();
-     
+      
       maze[entry.y][entry.x] = "entry";
       maze[exit.y][exit.x] = "exit";
       playerPosition = { ...entry };
       playerPath = [entry];
-      moveCount = 0;
-      timer = 0;
-      hasStarted = false;
-      gameEnded = false;
       enemies = [];
 
       renderMaze();
-     
       resetProgress = false;
     }
-   
+    
     function shuffleArray(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -300,28 +422,6 @@ const oddsOfCarving = 0.8;
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
       return arr;
-    }
-
-
-    function spawnEnemy() {
-      if (gameEnded) return;
-      let x, y;
-      do {
-        x = Math.floor(Math.random() * mazeSize);
-        y = Math.floor(Math.random() * mazeSize);
-      } while (
-        maze[y][x] === 'wall' ||
-        (x === playerPosition.x && y === playerPosition.y) ||
-        enemies.some(e => e.x === x && e.y === y)
-      );
-
-      const enemy = {
-        x,
-        y,
-        path: [],
-        stepIndex: 0
-      };
-      enemies.push(enemy);
     }
 
     // Use Dijkstra’s algorithm to find a shortest path on the current maze grid
@@ -426,25 +526,25 @@ const oddsOfCarving = 0.8;
 
           // collision?
           if (enemy.x === playerPosition.x && enemy.y === playerPosition.y) {
-            endGame(false);
+            endGame(false, "you've been caught...");
           }
         }
       });
 
       renderMaze();
     }
-   
+    
     function isSamePosition(point,x, y) {
       return (point && x === point.x && y === point.y);
     }
 
-   
+    
     function showAltPath(cell, x, y, path, style) {
       if (path.some(p => p.x === x && p.y === y)) {
         if (isSamePosition(exit, x, y)) return;
         if (isSamePosition(playerPosition, x, y)) return;
         if (maze[y][x] === 'wall') return;
-       
+        
         if (cell.classList.contains("playerpath")) {
           cell.classList.add("overlap");
         } else {
@@ -452,20 +552,20 @@ const oddsOfCarving = 0.8;
         }
       }
     }
-   
+    
     function renderMaze() {
       const mazeDiv = document.getElementById("maze");
       mazeDiv.innerHTML = "";
-     
+      
       mazeDiv.style.gridTemplateColumns = `repeat(${mazeSize}, ${cellSize}px)`;
       mazeDiv.style.gridTemplateRows = `repeat(${mazeSize}, ${cellSize}px)`;
 
-   
+    
       for (let y = 0; y < mazeSize; y++) {
         for (let x = 0; x < mazeSize; x++) {
           const cell = document.createElement("div");
-         
-         
+          
+          
           cell.className = "cell";
           cell.style.width = `${cellSize}px`;
           cell.style.height = `${cellSize}px`;
@@ -473,7 +573,7 @@ const oddsOfCarving = 0.8;
           if (gameEnded) {
             showAltPath(cell, x, y, playerPath, "playerpath");
           }
-         
+          
           if (gameEnded || renderHelp || renderOptimal) {
             showAltPath(cell, x, y, shortestPath, "shortestpath");
           }
@@ -498,12 +598,63 @@ const oddsOfCarving = 0.8;
           if (x === entry.x && y === entry.y) cell.classList.add("entry");
           else if (x === exit.x && y === exit.y) cell.classList.add("exit");
           else cell.classList.add(maze[y][x]);
-         
-         
+          
+          
           mazeDiv.appendChild(cell);
         }
       }
     }
+    
+    function spawnEnemy() {
+      if (gameEnded) return;
+      let x, y;
+      do {
+        x = Math.floor(Math.random() * mazeSize);
+        y = Math.floor(Math.random() * mazeSize);
+      } while (
+        maze[y][x] === 'wall' ||
+        (x === playerPosition.x && y === playerPosition.y) ||
+        enemies.some(e => e.x === x && e.y === y)
+      );
+
+      const enemy = { x, y, path: [], stepIndex: 0 };
+      enemies.push(enemy);
+    }
+
+    function spawnEnemies() {
+      const now = Date.now();
+
+      if (nextSpawnTime === null) return;
+      if (enemies.length >= 20) return;
+
+      if (timer >= nextSpawnTime) {
+        spawnEnemy();
+        spawnInterval = Math.max(spawnInterval - SPAWN_DECREMENT, MIN_SPAWN_INTERVAL);
+        nextSpawnTime = timer + spawnInterval;
+        console.log("new enemy total=" +  enemies.length + " at time" + timer);
+      }
+    }
+
+    function onPlayerFirstMove() {
+      if (nextSpawnTime === null) {
+        nextSpawnTime = spawnInterval;
+        spawnEnemieInterval = setInterval(spawnEnemies, 500);
+        enemyMovementInterval = setInterval(updateAllEnemies, 500);
+      }
+
+      timer = 0;
+      timerInterval = setInterval(() => {
+        timer++;
+        const timeLeft = MAX_TIME - timer;
+        messageEl.innerHTML = `Time left ${timeLeft}s`;
+
+        if (timer >= MAX_TIME) {
+          endGame(false, "too late...");
+          return;
+        }
+      }, 1000);
+    }
+
 
     function updatePlayer(x, y) {
       if (gameEnded) return;
@@ -511,13 +662,8 @@ const oddsOfCarving = 0.8;
 
       if (!hasStarted) {
         hasStarted = true;
-        timerInterval = setInterval(() => {
-          timer++;
-          messageEl.innertHtml = `Moves: ${moveCount} | Time: ${timer}s`;
-        }, 1000);
-       
-        enemySpawnInterval = setInterval(spawnEnemy, SPAWN_INTERVAL * 1000);
-        enemyMovementInterval = setInterval(updateAllEnemies, 500);
+        
+        onPlayerFirstMove();
       }
 
       playerPosition = { x, y };
@@ -525,23 +671,20 @@ const oddsOfCarving = 0.8;
       playerPath.push({ x, y });
 
       if (enemies.some(e => e.x === x && e.y === y)) {
-        endGame(false); return;
-      }
-     
-      if (timer >= MAX_TIME) {
-      endGame(false); return;
+        endGame(false, "you've been caught..."); return;
       }
 
       if (maze[y][x] === "exit") {
         endGame(true);
       } else {
-        messageEl.innerHTML = `Moves: ${moveCount} | Time: ${timer}s`;
         renderMaze();
       }
     }
 
     function calculatePoints(optimal, actual, time) {
-      let points = 3000;
+    
+      const maxPointsCoef = 3000 / 52; // for a maze size of 52 points  is 3000
+      let points = mazeSize * maxPointsCoef;
 
       // Penalty for actual > optimal, 100 points per 5% over
       if (actual > optimal) {
@@ -550,41 +693,39 @@ const oddsOfCarving = 0.8;
         const longPathPenalty = percentageOver / 2;
         points -= Math.min(1200, (longPathPenalty * 75)) + (deltaOptimal * 1.17);
       }
-     
+      
       const timeCoef = 15 / 90; // for a path of 90 , ideal time is 15s
       const idealTime = optimal * timeCoef;
-     
+      
       // Penalty for time > 20
       if (time > idealTime) {
         const extraTime = time - idealTime;
         points -= Math.min((extraTime * 15) + extraTime, 1800);
       } else {
-      points += (time * 1.23) + ((idealTime + 1 - time) * 50);
+      	points += (time * 1.23) + ((idealTime + 1 - time) * 50);
       }
 
       // Ensure points do not go below 50
       return Math.max(Math.floor(points), 50);
     }
 
-    function endGame(success) {
+    function endGame(success, failMessage = "boom...") {
       gameEnded = true;
-      clearInterval(timerInterval);
-      clearInterval(enemySpawnInterval);
 
+      clearAllIntervals();
       renderMaze();
-     
+      
       let playerPoints = calculatePoints(shortestPath.length, playerPath.length, timer);
-     
+      
       if (success) {
         messageEl.innerHTML = `
-          🧭 Moves: <span style="color: #1565c0;">${moveCount}</span>
-          ⏱️ Time: <span style="color: #f57c00;">${timer}s</span><br>
-          💯 Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
-          <em>Press <strong>Space</strong> to play again!</em>
+          Moves: <span style="color: #1565c0;">${moveCount}</span>
+          Time: <span style="color: #f57c00;">${timer}s</span><br>
+          Total Points: <span style="color: #c62828;">${playerPoints}</span><br>
         `;
 
       } else {
-        messageEl.innerHTML = `💀 You were caught! (hit Space to retry!)`;
+        messageEl.innerHTML = failMessage;
       }
 
     }
@@ -599,10 +740,59 @@ const oddsOfCarving = 0.8;
       else if (e.key == "Space" || e.keyCode == 32  ) resetGame();
       else if (e.key == "w") endGame(true);
       else if (e.key == "l") endGame(false);
-      else if (e.key == "h" || e.key == "H"  ) { renderHelp = !renderHelp; renderMaze(); }
-      else if (e.key == "x" || e.key == "X"  ) { renderOptimal = !renderOptimal; renderMaze(); }
+      else if (e.key == "h" || e.key == "H"  ) {
+      	renderHelp = !renderHelp; renderOptimal=false; 
+        renderMaze(); 
+        }
+      else if (e.key == "x" || e.key == "X"  ) { 
+      	renderOptimal = !renderOptimal; renderHelp = false;
+        renderMaze(); 
+      }
     });
 
+    // Mobile controls
+    document.querySelectorAll('.arrow').forEach(button => {
+      const direction = button.dataset.dir;
+      const keyMap = {
+        up: 'ArrowUp',
+        down: 'ArrowDown',
+        left: 'ArrowLeft',
+        right: 'ArrowRight'
+      };
+
+      const startHolding = (e) => {
+        e.preventDefault(); // ✅ Prevent double-tap zoom on mobile
+
+        if (currentHeld !== direction) {
+          stopHolding(); // Stop previous if different
+          currentHeld = direction;
+
+          // Trigger initial move
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+
+          holdInterval = setInterval(() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[direction] }));
+          }, 100); // Adjust repeat rate as needed
+        }
+      };
+
+      const stopHolding = () => {
+        if (holdInterval) clearInterval(holdInterval);
+        holdInterval = null;
+        currentHeld = null;
+      };
+
+      button.addEventListener('touchstart', startHolding, { passive: false });
+      button.addEventListener('touchend', stopHolding);
+      button.addEventListener('touchcancel', stopHolding);
+    });
+
+
+    document.getElementById("restart-button").addEventListener("click", () => {
+      resetGame();
+    });
+
+    // START THE GAME
     resetGame();
   </script>
 </body>
