@@ -706,19 +706,27 @@
 		}
 
 
-		function getTouchDirection(x, y) {
-		  const size = arrowSize;
+		function getNewDirection(currentDir, turn) {
+			const turnMap = {
+				'N': { left: 'O', right: 'E' },
+				'S': { left: 'E', right: 'O' },
+				'E': { left: 'N', right: 'S' },
+				'O': { left: 'S', right: 'N' }
+			};
+			return turnMap[currentDir][turn];
+		}
 
-		  const inside = (pos) =>
-		    x >= pos.x && x <= pos.x + size &&
-		    y >= pos.y && y <= pos.y + size;
+		function getTouchTurn(x, y) {
+			const size = arrowSize;
 
-		  if (inside(controlPos.u)) return "N";
-		  if (inside(controlPos.r)) return "E";
-		  if (inside(controlPos.d)) return "S";
-		  if (inside(controlPos.l)) return "O";
+			const inside = (pos) =>
+				x >= pos.x && x <= pos.x + size &&
+				y >= pos.y && y <= pos.y + size;
 
-		  return null;
+			if (inside(controlPos.l)) return "left";
+			if (inside(controlPos.r)) return "right";
+
+			return null;
 		}
 
 
@@ -820,9 +828,11 @@
 				const touchX = touch.clientX - rect.left;
 				const touchY = touch.clientY - rect.top;
 
-				const dir = getTouchDirection(touchX, touchY);
-				if (dir) {
-					changeDirection(dir);
+				const turn = getTouchTurn(touchX, touchY);
+				if (turn) {
+					const headDir = snake.getParts()[0].dir;
+					const newDir = getNewDirection(headDir, turn);
+					changeDirection(newDir);
 				}
 			},
 			onKeyDown: function(evt) {
