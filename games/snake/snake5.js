@@ -20,18 +20,20 @@
 	       	move(element, newX, newY) {
 	            this.deleteValue(element.x, element.y);
 	            this.update(newX, newY, element.val)
+	            return { x: newX, y: newY, val: element.val };
 	        },
 
-	        update(x, y, value) {
-	            if (!this.map[x]) {
-	                this.map[x] = [];
+	        update(newX, newY, value) {
+	            if (!this.map[newX]) {
+	                this.map[newX] = [];
 	            }
-	            this.map[x][y] = value;
+	            this.map[newX][newY] = value;
+	            return { x: newX, y: newY, val: value };
 	        },
 
 	        getValue(x, y) {
 	            if (!this.map[x] || this.map[x][y] === undefined) return false;
-	            return this.map[x][y];
+	            return { x: x, y: y, val: this.map[x][y] };
 	        },
 
 	        deleteValue(x, y) {
@@ -39,7 +41,7 @@
 	                delete this.map[x][y];
 	            }
 	        },
-
+	        // return {x, y, val}
 	        getList() {
 	            const list = [];
 	            for (let i = 0; i < this.map.length; i++) {
@@ -288,6 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
+		const APP_VERSION = "v53";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -362,14 +365,27 @@
 
             // every second
             if ( cycle1000 == endCycle1000  ) {
-
                 cycle1000 = 0;
 
-                if (Math.floor(Math.random() * 100) < 20) {
-					addRandomApple();
-                }
+                let goldenOdds = 3; // 3% to create a GOLDEN apple
+                goldenOdds += Math.floor(currentLevel * 1.5);
 
-                if (Math.floor(Math.random() * 100) < 5) {
+            	let appleOdds = 20; // 20% chance of drawing
+            	let mouseOdds = 7; // 7% chance of drawing
+
+                const nbApples = appleMap.getList().length;
+                const nbMouse = mouseMap.getList().length;
+
+                if (nbApples < 1) appleOdds += 30; // 30% boost
+                if (nbMouse < 1) mouseOdds += 20; // 20% boost
+
+                let appleKind = (Math.floor(Math.random() * 100) < goldenOdds) 
+                	? 'gold' : 'apple';
+
+                if (Math.floor(Math.random() * 100) < appleOdds) {
+					addRandomApple(appleKind);
+                }
+                if (Math.floor(Math.random() * 100) < mouseOdds) {
 					addRandomMouse();
                 }
             }
@@ -417,7 +433,7 @@
 
                 let appleFound = appleMap.getValue(snakeX, snakeY);
             	if (appleFound) {
-            		onAppleEaten();
+            		onAppleEaten(appleFound);
             		appleMap.deleteValue(snakeX, snakeY);
             	}
             	
@@ -438,31 +454,51 @@
 		}
 
 
-		function drawLevel(ctx, level) {
-			let txtSize = 3.2;
+		function drawLevel(ctx, level, snakeSize) {
+		    let txtSize = 3.2;
 
 		    ctx.save();
 		    ctx.globalAlpha = 0.5; // Transparent text
 		    ctx.fillStyle = "grey";
 		    ctx.font = Math.floor(blocSize * 2.7) + "px Arial"; // Scale font with blocSize
 		    ctx.textAlign = "center";
+
+		    // Draw Level
 		    ctx.fillText("Level " + level, canvas.width / 2, blocSize * txtSize * 1.3);
+
+		    // Draw Snake Size (a bit below the Level)
+		    ctx.font = Math.floor(blocSize * 1.4) + "px Arial"; // Slightly smaller font for snake size
+		    ctx.fillText("Size: " + snake.getParts().length, canvas.width / 2, blocSize * txtSize * 2.3);
+
 		    ctx.restore();
 		}
 
+
 		function drawGame() {
+            drawVersion(ctx);
             showControls()	
             drawMouseMap();
             drawAppleMap();
-            showSnake();
+
             drawLevel(ctx, currentLevel);
+            showSnake();
 		}
+
+		function drawVersion(ctx) {
+		    var padding = 10; // distance from the top and right
+
+		    ctx.font = "14px Arial"; // small, clean font
+		    ctx.fillStyle = "rgb(36, 36, 36, 0.8)"; // white with a bit of transparency
+		    ctx.textAlign = "right"; // align text to the right
+		    ctx.textBaseline = "top"; // align to top of the canvas
+
+		    ctx.fillText(APP_VERSION, appW - padding, padding);
+		}
+
 		function drawAppleMap() {
-			var a = appleMap.getList();
-			for (var i = 0; i < a.length; i++) {
-				var o = a[i];
-				drawApple({"x":o.x,"y":o.y});
-			}
+		    appleMap.getList().forEach(function(apple) {
+		        drawApple(apple);
+		    });
 		}
 
 		function drawMouseMap() {
@@ -497,21 +533,28 @@
 
 
         function onMouseEaten() {
-            pendingParts += 4; // number of snake parts to add
+        	let newParts = 4;
+            pendingParts += newParts; // number of snake parts to add
             nbMouseEaten += 1; 
+
+            totalPoints += newParts;
             checkLevel();
         }
-        function onAppleEaten() {
-            pendingParts += 1; // number of snake parts to add
+        function onAppleEaten(apple) {
+        	console.log("APPLE EATEN kind=" + apple.val);
+
+        	let newParts = apple.val == 'gold' ? 7 : 1;
+            pendingParts += newParts; // number of snake parts to add
             nbAppleEaten += 1;
+
+            totalPoints += newParts;
             checkLevel();
         }
 
         function checkLevel() {
             var nextLevel = Math.floor(BASE_LEVEL * Math.pow(currentLevel,2));
 
-            var testLevel = nbAppleEaten + nbMouseEaten * 4;
-            if (testLevel >= nextLevel) {
+            if (totalPoints >= nextLevel) {
                 currentLevel += 1;
                 restartMove(actionSpeed - 10);
             }
@@ -576,8 +619,10 @@
             ctx.fillRect(coord.x,coord.y,blocSize,blocSize)
             ctx.fill();
         }
-        function addRandomApple(){
-        	
+
+        function addRandomApple(appleKind = 'apple'){
+        	console.log('add new apple kind=' + appleKind);
+     
         	if (appleMap.getList().length > 19) {
         		console.log("apple maxed out....")
         		return;
@@ -589,8 +634,8 @@
         	
 
             if (!snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
-            	appleMap.update(Ax, Ay, "apple");
-                drawApple(coord);
+            	let newApple = appleMap.update(Ax, Ay, appleKind);
+                drawApple(newApple);
             }
         }
 
@@ -615,14 +660,22 @@
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
 
-        function drawAppleList() {
-            for (i=0; i < appleList.length; i++) {
-            	drawApple(appleList[i]);
-            }
-        }
-        function drawApple(coord) {
-            var img = Globals.Loader.getAsset('apple');
-            ctx.drawImage(img,coord.x-blocSize/3,coord.y-blocSize/3,blocSize*1.5,blocSize*1.5);
+        function drawApple(apple) {
+
+        	let imgAsset = apple.val == 'gold' ? 'goldapple' : 'apple';
+            var img = Globals.Loader.getAsset(imgAsset);
+
+            ctx.drawImage(img,apple.x-blocSize/3,apple.y-blocSize/3,blocSize*1.5,blocSize*1.5);
+
+
+            // Delete Golden apple after 5seconds
+            const deleteAfter = 8;
+
+            if (apple.val == 'gold') {
+				setTimeout(function() {
+				    appleMap.deleteValue(apple.x, apple.y);
+				}, deleteAfter * 1000); 
+			}
         }
 
 		function drawMouse(coord) {
@@ -711,7 +764,7 @@
 		  pos.r.y = centerY;
 		  pos.l.y = centerY;
 
-		  ctx.globalAlpha = 0.3;
+		  ctx.globalAlpha = 0.2;
 
 		  function drawRotatedArrow(rotation, pos) {
 		    const rO = getRotationObj(rotation, pos.x, pos.y, arrowSize, arrowSize);
@@ -841,9 +894,12 @@
 				cycle1000 = 0;
 				cycleMouse = 0;
                 currentLevel = 1;
+
+                totalPoints = 0;
                 nbAppleEaten = 0;
                 nbMouseEaten = 0;
                 pendingParts = 0;
+
 				sMoveAction = "";
 				currentTime = 0;
 
@@ -1031,7 +1087,6 @@
 
 		// desktop
 		document.addEventListener("keydown", function(e) {
-			console.log("keydown");
 		    AppSnake.onKeyDown(e);
 		});
 
@@ -1054,6 +1109,7 @@
 	        mouse1: 'mouse1.png',
 	        mouse2: 'mouse2.png',
 	        apple: 'apple.png',
+	        goldapple: 'goldapple.png',
 	        arrowup: 'arrowup.png',
 	        gameover: 'game_over.jpg',
 	    }
