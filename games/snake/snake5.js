@@ -185,15 +185,11 @@
 
 		        // Adjust for wrapping within canvas, considering dynamic grid size
 		        if (time > initSnakeSize) {
-		            if (nX >= that.appW - size) nX = 0;
+		            if (nX >= that.appW) nX = 0;
 		            if (nX < 0) nX = that.appW - size;
-		            if (nY >= that.appH - size) nY = 0;
+		            if (nY >= that.appH) nY = 0;
 		            if (nY < 0) nY = that.appH - size;
 		        }
-
-		        // Ensure that the snake's coordinates align with the grid (multiples of blocSize)
-		        nX = Math.floor(nX / size) * size;
-		        nY = Math.floor(nY / size) * size;
 
 		        listPart[i].x = nX;
 		        listPart[i].y = nY;
@@ -298,8 +294,6 @@
 		let gridW = 50;
 		let gridH = 30;
 
-		let infoBarEl;
-
 		// APP INIT
 		var isReady = false
 		var snake;
@@ -314,17 +308,28 @@
 
         var appleList = [];
         var mouseList = [];
-        var listBodyColor = ['rgb(124,213,64)','rgb(176,212,248)','rgb(62,165,248)','rgb(30,100,171)','rgb(246,165,245)'
-        ,'rgb(249,102,176)','rgb(241,49,49)'];
-        var nbBodyColor = listBodyColor.length;
+		var listBodyColor = [
+		    'rgb(176,212,248)', // Light Blue		
+		    'rgb(124,213,64)',  // Light Green 
+		    'rgb(62,165,248)',  // Medium Blue
+		    'rgb(30,100,171)',  // Dark Blue
+		    'rgb(255,200,120)', // Light Orange
+		    'rgb(255,165,0)',   // Orange
+		    'rgb(255,140,0)',   // Dark Orange
+		    'rgb(246,165,245)', // Light Pink
+		    'rgb(249,102,176)', // Pink	
+		    'rgb(241,49,49)',   // Red
+		    'rgb(139,0,0)',     // Dark Red
+		    'rgb(0,0,0)'        // Black
+		];
 
-        var NB_BASE_LEVEL = 5;
+        var BASE_LEVEL = 5;
         var pendingParts = 0;
         var nbAppleEaten = 0;
         var nbMouseEaten = 0;
         var INIT_SPEED = 150
 		var actionSpeed = 0;
-        var numLevel = 1;
+        var currentLevel = 1;
         var isGameOver = false;
         
         var appleMap = new GridMap();
@@ -399,7 +404,7 @@
             // eat myself ?
             if (!isGameOver) {
                 if ( snake.isHeadOnBody() ) {
-                    GameOver();
+                    onGameOver();
                 }
             }
 
@@ -428,13 +433,28 @@
                 }
             }
             
-            showGame();
+            drawGame();
 		}
-		function showGame() {
+
+
+		function drawLevel(ctx, level) {
+			let txtSize = 3.2;
+
+		    ctx.save();
+		    ctx.globalAlpha = 0.5; // Transparent text
+		    ctx.fillStyle = "grey";
+		    ctx.font = Math.floor(blocSize * 2.7) + "px Arial"; // Scale font with blocSize
+		    ctx.textAlign = "center";
+		    ctx.fillText("Level " + level, canvas.width / 2, blocSize * txtSize * 1.3);
+		    ctx.restore();
+		}
+
+		function drawGame() {
             showControls()	
             drawMouseMap();
             drawAppleMap();
             showSnake();
+            drawLevel(ctx, currentLevel);
 		}
 		function drawAppleMap() {
 			var a = appleMap.getList();
@@ -487,13 +507,12 @@
         }
 
         function checkLevel() {
-            var nextLevel = NB_BASE_LEVEL * Math.pow(numLevel,2);
+            var nextLevel = Math.floor(BASE_LEVEL * Math.pow(currentLevel,2));
 
             var testLevel = nbAppleEaten + nbMouseEaten * 4;
             if (testLevel >= nextLevel) {
-                numLevel += 1;
+                currentLevel += 1;
                 restartMove(actionSpeed - 10);
-                infoBarEl.innerHTML = "Level " + numLevel;
             }
         }
 		function initMove() {
@@ -548,8 +567,8 @@
 		}
 
         function drawPartBody(part) {
-            var iColor = Math.min(nbBodyColor,numLevel)
-            drawSquare(part,listBodyColor[iColor]);
+            var iColor = Math.min(listBodyColor.length, currentLevel) - 1;
+            drawSquare(part, listBodyColor[iColor]);
         }
         function drawSquare(coord,color) {
             ctx.fillStyle = color;
@@ -569,7 +588,6 @@
         	
 
             if (!snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
-        		console.log("apple x=" + Ax + ", y="+ Ay);
             	appleMap.update(Ax, Ay, "apple");
                 drawApple(coord);
             }
@@ -641,41 +659,69 @@
 			isPause = !isPause;
 			console.log("new isPause value=" + isPause);
 		}
-		function GameOver() {
+
+		function onGameOver() {
 			clearInterval(idMove);
 
 			idMove = 0;
 			currentTime = 0;
             isGameOver = true;
 
+            drawGameOverMessage();
+		}
+		
+
+		let restartHeight;
+		function drawGameOverMessage() {
 			var img = Globals.Loader.getAsset('gameover');
-			
-            var iX = (appW-img.width)/2;
-            var iY = (appH-img.height)/2;
 
 			ctx.save();
 			ctx.globalAlpha = 0.3;
-			ctx.drawImage(img,iX,iY,img.width,img.height);
-			ctx.restore();
+			
+			// Game Over
+			var imgScale = blocSize * 0.1;
+			var overWid = img.width * imgScale;
+			var overHei = img.height * imgScale;
 
+            var iX = (canvas.width - overWid)/2;
+            var iY = (canvas.height - overHei)/2;
+			ctx.drawImage(img, iX, iY, overWid, overHei);
+
+
+			// Restart message
+		    ctx.globalAlpha = 0.7; // Slightly transparent
+		    ctx.fillStyle = "red";
+		    ctx.font = Math.floor(blocSize * 1.5) + "px Arial";
+		    ctx.textAlign = "center";
+
+		    restartHeight = canvas.height - blocSize * 2;
+		    const restartMessage = isMobile() ? "Tap here to restart" : "Click here to restart";
+		    ctx.fillText(restartMessage, canvas.width / 2, restartHeight);
+
+			ctx.restore();
 		}
 
 		function showControls() {
 		  const img = Globals.Loader.getAsset('arrowup');
 		  const pos = controlPos;
 
+		  // Center vertically
+		  const centerY = (canvas.height / 2) - (arrowSize / 2);
+		  pos.r.y = centerY;
+		  pos.l.y = centerY;
+
 		  ctx.globalAlpha = 0.3;
 
-		  // Helper function to draw rotated arrows (Right, Down, Left)
 		  function drawRotatedArrow(rotation, pos) {
 		    const rO = getRotationObj(rotation, pos.x, pos.y, arrowSize, arrowSize);
+
 		    ctx.save();
 		    ctx.rotate(rotation * Math.PI / 180);
 		    ctx.drawImage(img, rO.x, rO.y, rO.w, rO.h);
 		    ctx.restore();
 		  }
 
-		  // Draw the arrows (no rotation for Up arrow)
+		  // Draw the arrows
 		  drawRotatedArrow(90,  pos.r);  // Right
 		  drawRotatedArrow(270, pos.l);  // Left
 
@@ -718,8 +764,7 @@
 			const size = arrowSize;
 
 			const inside = (pos) =>
-				x >= pos.x && x <= pos.x + size &&
-				y >= pos.y && y <= pos.y + size;
+				x >= pos.x && x <= pos.x + size;
 
 			if (inside(controlPos.l)) return "left";
 			if (inside(controlPos.r)) return "right";
@@ -740,7 +785,7 @@
 			blocSize = Math.floor(window.innerWidth / 24);
 			arrowSize = Math.floor(window.innerWidth / 4);
 			const availableWidth = window.innerWidth - 40;
-			const availableHeight = window.innerHeight - 120;
+			const availableHeight = window.innerHeight - 100;
 
 			// Compute how many cells fit
 			gridW = Math.floor(availableWidth / blocSize);
@@ -753,15 +798,12 @@
 			appW = blocSize * gridW;
 			appH = blocSize * gridH;
 
-			let infoBar = document.getElementById("info-bar");
-			let restartBtn = document.getElementById("restart-btn");
-	        infoBar.style.fontSize = '32px';
-	        infoBar.style.padding = '12px';
-
-	        restartBtn.style.fontSize = '32px';
-	        restartBtn.style.padding = '12px';
-
+			document.getElementById('app_container').style.margin = '40px';
 			positionControlsForMobile();
+		}
+
+		function getGameOver() {
+			return isGameOver;
 		}
 
 		return {
@@ -770,7 +812,6 @@
 			},
 			appReady : function () {
 				isReady = true;
-				infoBarEl = document.getElementById("info-bar");
 
 				if (isMobile()) {
 					console.log("isMobile");
@@ -798,7 +839,7 @@
                 actionSpeed = INIT_SPEED;
 				cycle1000 = 0;
 				cycleMouse = 0;
-                numLevel = 1;
+                currentLevel = 1;
                 nbAppleEaten = 0;
                 nbMouseEaten = 0;
                 pendingParts = 0;
@@ -817,12 +858,32 @@
                 initCanvas();
 
 				initMove();
-				showGame();
+				drawGame();
 			},
+			onClick: function(e) {
+
+				const rect = canvas.getBoundingClientRect();
+
+				if (getGameOver() && restartHeight) {
+					const clientY = e.clientY
+					if (clientY >= restartHeight) {
+						AppSnake.startGame();
+					}
+				}
+			}, 
 			onTouchStart: function(e) {
 				e.preventDefault();
-				const touch = e.touches[0];
+
 				const rect = canvas.getBoundingClientRect();
+
+				if (getGameOver() && restartHeight) {
+					const clientY = e.touches[0].clientY;
+					if (clientY >= restartHeight) {
+						AppSnake.startGame();
+					}
+				}
+
+				const touch = e.touches[0];
 				const touchX = touch.clientX - rect.left;
 				const touchY = touch.clientY - rect.top;
 
@@ -849,6 +910,9 @@
 				else if (evt.keyCode == 40) sDir = 'S';
 				else if (evt.keyCode == 37) sDir = 'O';
 				else if (evt.keyCode == 32) startPause();
+				else if (evt.key == "p") {
+					currentLevel += 1;
+				}
 				else if (evt.key == "x") {
 					let hPos = snake.getHeadPos();
 					console.log("snakeHead x=" + hPos.x + ", y="+hPos.y);
@@ -954,26 +1018,27 @@
 	    AppSnake.appReady();
 	    AppSnake.startGame();
 
-	    const canvas = AppSnake.getCanvas();
-		canvas.addEventListener("click", () => canvas.focus());
-		canvas.addEventListener("touchstart", () => canvas.focus());
 
+	    const canvas = AppSnake.getCanvas();
+
+	    // Mobile
+		canvas.addEventListener("touchstart", (e) => {
+			canvas.focus();
+			AppSnake.onTouchStart(e);
+		});
+
+
+		// desktop
 		document.addEventListener("keydown", function(e) {
 			console.log("keydown");
 		    AppSnake.onKeyDown(e);
 		});
 
-		document.getElementById("restart-btn").addEventListener("click", function() {
-		  AppSnake.startGame();
+		canvas.addEventListener("click", (e) => {
+			canvas.focus();
+			AppSnake.onClick(e);
 		});
 
-		canvas.addEventListener("touchstart", (e) => {
-			AppSnake.onTouchStart(e);
-		});
-
-		const restartBtn = document.getElementById("restart-btn");
-		restartBtn.addEventListener("click", AppSnake.startGame);
-		restartBtn.addEventListener("touchstart", AppSnake.startGame);
 
 	});
 
