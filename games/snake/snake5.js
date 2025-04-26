@@ -14,39 +14,50 @@
 	}
 	
 	function GridMap() {
-		var that = {};
-		that.map = [];
-		that.update = function (x,y,value) {
-		    if ( that.map[x] == undefined) {
-		    	that.map[x] = []; 
-		    	that.map[x][y] = value;
-		    } else {
-		    	that.map[x][y] = value;
-		    }
-		}
-		that.getValue = function(x,y) {
-			if ( that.map[x] == undefined) return false;
-			else {
-				if ( that.map[x][y] == undefined) return false;
-				else return that.map[x][y];
-			}
-		}
-	    that.deleteValue = function (x,y) {
-	    	that.map[x].splice(y,1);
-	    }
-		that.getList = function() {
-			var list = [];
-			for(var i in that.map) {
-			    var t = that.map[i];
-			    for(var j in t) {
-			    	var obj = {x:i,y:j,val:t[j]};
-			    	list.push(obj);
-			    }
-			}
-			return list;
-		}
-		return that;
+	    const that = {
+	        map: [],
+	       	
+	       	move(element, newX, newY) {
+	            this.deleteValue(element.x, element.y);
+	            this.update(newX, newY, element.val)
+	        },
+
+	        update(x, y, value) {
+	            if (!this.map[x]) {
+	                this.map[x] = [];
+	            }
+	            this.map[x][y] = value;
+	        },
+
+	        getValue(x, y) {
+	            if (!this.map[x] || this.map[x][y] === undefined) return false;
+	            return this.map[x][y];
+	        },
+
+	        deleteValue(x, y) {
+	            if (this.map[x] && this.map[x][y] !== undefined) {
+	                delete this.map[x][y];
+	            }
+	        },
+
+	        getList() {
+	            const list = [];
+	            for (let i = 0; i < this.map.length; i++) {
+	                const row = this.map[i];
+	                if (row) {
+	                    for (let j = 0; j < row.length; j++) {
+	                        if (row[j] !== undefined) {
+	                            list.push({ x: i, y: j, val: row[j] });
+	                        }
+	                    }
+	                }
+	            }
+	            return list;
+	        }
+	    };
+	    return that;
 	}
+
 	
 	function SnakePart(x,y,dir){
 		var that = {};
@@ -54,7 +65,7 @@
         that.x = x;
         that.y = y;
         that.dir = dir; // N,E,S,O
-        var listPivots = []; // [ {"coord":{"x":0,"y":0},"dir":"N"} ... ]
+        var listPivots = []; 
 
         that.getFirstPivot = function() {
             if (listPivots.length>0) {
@@ -79,6 +90,7 @@
         return that;
     }
 	function Snake(n,W,H,i){
+		console.log("init snake blocSize=" + n + ", w=" + W + ", h=" + H + ", size=" + i);
 		var that = {};
 
 		// private variable
@@ -154,36 +166,40 @@
 			}
 		};
 		that.move = function(time) {
-			//log("move time :"+time);
-			var nbParts = getLength();
-			for(i=0;i<nbParts;i++) {
-				var oPart = listPart[i];
+		    var nbParts = getLength();
+		    for (i = 0; i < nbParts; i++) {
+		        var oPart = listPart[i];
 
-				// is it time to change dir ?
-				var partPivot = oPart.getFirstPivot();
-				if (partPivot != - 1) {
-					//log("...part["+i+"] :"+ partPivot.time) ;
-					if ( partPivot.time == time ){
-						oPart.dir = partPivot.dir;
-						oPart.removeFirstPivot();
-					}
-				}
+		        // Is it time to change direction?
+		        var partPivot = oPart.getFirstPivot();
+		        if (partPivot != -1) {
+		            if (partPivot.time == time) {
+		                oPart.dir = partPivot.dir;
+		                oPart.removeFirstPivot();
+		            }
+		        }
 
-				var dPos = getDeltaDir(oPart.dir);
-				var nX = listPart[i].x + dPos.x;
-				var nY = listPart[i].y + dPos.y;
+		        var dPos = getDeltaDir(oPart.dir);
+		        var nX = listPart[i].x + dPos.x;
+		        var nY = listPart[i].y + dPos.y;
 
-				if ( time > initSnakeSize) {
-					if ( nX > that.appW-size) nX = 0;
-					if ( nX < 0 ) nX = that.appW-size;
-					if ( nY > that.appH-size) nY = 0;
-					if ( nY < 0 ) nY = that.appH-size;
-				}
+		        // Adjust for wrapping within canvas, considering dynamic grid size
+		        if (time > initSnakeSize) {
+		            if (nX >= that.appW - size) nX = 0;
+		            if (nX < 0) nX = that.appW - size;
+		            if (nY >= that.appH - size) nY = 0;
+		            if (nY < 0) nY = that.appH - size;
+		        }
 
-				listPart[i].x = nX;
-				listPart[i].y = nY;
-			}
+		        // Ensure that the snake's coordinates align with the grid (multiples of blocSize)
+		        nX = Math.floor(nX / size) * size;
+		        nY = Math.floor(nY / size) * size;
+
+		        listPart[i].x = nX;
+		        listPart[i].y = nY;
+		    }
 		};
+
 		that.getLength = function() {
 			return getLength();
 		};
@@ -274,21 +290,27 @@
 
 	
 	/* singleton to manage the game */
-	var AppSnake = function() {
-		
+	const AppSnake = (function() {
+		const canvas = document.getElementById("snakecontainer");
+		const ctx = canvas.getContext("2d");
+
+		let blocSize = 13;
+		let gridW = 50;
+		let gridH = 30;
+
+		let infoBarEl;
+
 		// APP INIT
 		var isReady = false
-		var ctx;
 		var snake;
-		var blocSize = 13;
 		var isPause = false;
-		var appW = 468;
-		var appH = 299;
+		var appW = blocSize * gridW;
+		var appH = blocSize * gridH;
 		var currentTime = 0;
 		var idMove = 0;
 		var sMoveAction = "";
         var cycle1000 = 0;
-        var cycle250 = 0;
+        var cycleMouse = 0;
 
         var appleList = [];
         var mouseList = [];
@@ -296,7 +318,7 @@
         ,'rgb(249,102,176)','rgb(241,49,49)'];
         var nbBodyColor = listBodyColor.length;
 
-        var NB_BASE_LEVEL = 3;
+        var NB_BASE_LEVEL = 5;
         var pendingParts = 0;
         var nbAppleEaten = 0;
         var nbMouseEaten = 0;
@@ -308,7 +330,7 @@
         var appleMap = new GridMap();
         var mouseMap = new GridMap();
         
-        var arrowSize = 80;
+        var arrowSize = 160;
         var controlPos = {
 			u:{x:appW/2-arrowSize/2,y:20} , 
 			r:{x:appW-20-arrowSize,y:appH/2-arrowSize/2} , 
@@ -326,34 +348,38 @@
 		}
 		function onActionMove() {
 
+			cycleMouse ++;
             cycle1000 ++;
-			cycle250 ++;
 
+            var endCycleMouse = Math.floor(350/actionSpeed);
             var endCycle1000 = Math.floor(1000/actionSpeed);
-            if ( cycle1000 == endCycle1000  ) {
-                
-				//snake.logSnake();
-                cycle1000 = 0;
-                // toute les secondes : 1 chance sur 5 de faire pousser une pomme
-                var numApple = Math.floor( getRandom(1,5)/5 );
-                addRandomApple(numApple);
 
-                // toute les secondes : 1 chance sur 20 de faire pousser une souris
-				var numMouse = Math.floor( getRandom(1,20)/20 );
-				addRandomMouse(numMouse);
+            // every second
+            if ( cycle1000 == endCycle1000  ) {
+
+                cycle1000 = 0;
+
+                if (Math.floor(Math.random() * 100) < 20) {
+					addRandomApple();
+                }
+
+                if (Math.floor(Math.random() * 100) < 5) {
+					addRandomMouse();
+                }
             }
-            var endCycle250 = Math.floor(250/actionSpeed);
-			if ( cycle250 == endCycle250  ) {
-				cycle250 = 0;
+
+            // every 250ms
+			if ( cycleMouse == endCycleMouse  ) {
+				cycleMouse = 0;
 				// move mice
-				moveAllMouse();
+				drawMouseMap();
 			}
 
             // clear all
             ctx.clearRect(0, 0, appW, appH);
             
 			if (sMoveAction != "") {
-				snake.addPivotToParts(currentTime,sMoveAction);
+				snake.addPivotToParts(currentTime, sMoveAction);
 				sMoveAction = "";
 			}
 
@@ -379,25 +405,22 @@
 
             if (!isGameOver) {
                 // eat an apple ?
-            	if (appleMap.getValue(hPos.x, hPos.y) ) {
+
+            	let snakeX = hPos.x;
+            	let snakeY = hPos.y;
+
+                let appleFound = appleMap.getValue(snakeX, snakeY);
+            	if (appleFound) {
             		onAppleEaten();
-            		appleMap.deleteValue(hPos.x, hPos.y)
+            		appleMap.deleteValue(snakeX, snakeY);
             	}
             	
-                // eat an mouse ?
-                for(j=0;j<mouseList.length;j++) {
-                    var aM = mouseList[j];
-                    var isMiam = false;
-                    if      (aM.x==hPos.x && aM.y==hPos.y) isMiam = true;
-                    else if (aM.x+blocSize==hPos.x && aM.y==hPos.y) isMiam = true;
-                    else if (aM.x==hPos.x && aM.y+blocSize==hPos.y) isMiam = true;
-                    else if (aM.x+blocSize==hPos.x && aM.y+blocSize==hPos.y) isMiam = true;
-
-                    if (isMiam) {
-                        mouseList.splice(j,1);
-                        onMouseEaten();
-                    }
-                }
+            	let mouseFound = mouseMap.getValue(snakeX, snakeY);
+            	if (mouseFound) {
+            		onMouseEaten();
+            		mouseMap.deleteValue(snakeX, snakeY);
+            	}
+            	
                 // grow a part ?
                 if ( pendingParts > 0 ) {
                     snake.addParts(1);
@@ -408,9 +431,8 @@
             showGame();
 		}
 		function showGame() {
-
             showControls()	
-            drawMouseList();
+            drawMouseMap();
             drawAppleMap();
             showSnake();
 		}
@@ -421,91 +443,77 @@
 				drawApple({"x":o.x,"y":o.y});
 			}
 		}
-        function moveAllMouse() {
-            for (i=0;i<mouseList.length;i++) {
 
-                var numChance = Math.floor( getRandom(1,5)/5 );
-                if (numChance > 0 ) {
-                    var newDir = "O"
-                    var numDir = getRandom(1,4);
-                    if (numDir==1) newDir = "N";
-                    if (numDir==2) newDir = "S";
-                    if (numDir==3) newDir = "E";
-					mouseList[i].dir = newDir;
-                }
+		function drawMouseMap() {
+		    // Get the list of mice from mouseMap
+		    var mice = mouseMap.getList();
 
-				var cx = mouseList[i].x;
-				var cy = mouseList[i].y;
-				var mDir  = mouseList[i].dir;
-                var ret = {"x":0,"y":0};
+		    // Loop through all mice in the list
+		    mice.forEach(function(mouse) {
+		        // Draw each mouse at its current position
+		        drawMouse(mouse);
 
-                if ( mDir == 'N' ) {
-                    ret.x = 0; ret.y = -blocSize;
-                } else if ( mDir == 'E' ) {
-                    ret.x = blocSize; ret.y = 0;
-                } else if ( mDir == 'S' ) {
-                    ret.x = 0; ret.y = blocSize;
-                } else if ( mDir == 'O' ) {
-                    ret.x = -blocSize; ret.y = 0;
-                }
-                cx += ret.x; 
-				cy += ret.y;
+		        // 20% chance not to move
+		        if (getRandom(1,5)>1) return;
 
-                var maxW = appW-blocSize, maxH = appH-blocSize;
-                if ( cx > maxW) cx = 0;
-                if ( cx < 0) cx = maxW;
-                if ( cy > maxH ) cy = 0;
-                if ( cy < 0 ) cy = maxH;
+		        // Move the mouse randomly within a certain range (you can tweak this range)
+		        var moveX = getRandom(-1, 1) * blocSize;  // Random X movement (within blocSize)
+		        var moveY = getRandom(-1, 1) * blocSize;  // Random Y movement (within blocSize)
 
-				mouseList[i].x = cx;
-				mouseList[i].y = cy;
+		        // Update the mouse's position
+		        let newX = mouse.x + moveX;
+		        let newY = mouse.y + moveY;
 
-            }
-        }
-        function drawMouseList() {
-            for(i=0;i<mouseList.length;i++) {
-                drawMouse(mouseList[i]);
-            }
-        }
+		        // Optional: Ensure the mouse stays within canvas bounds (avoid going out of bounds)
+		        newX = Math.max(0, Math.min(canvas.width - blocSize, newX));
+		        newY = Math.max(0, Math.min(canvas.height - blocSize, newY));
+
+		        mouseMap.move(mouse, newX, newY);
+
+		    });
+		}
+
+
 
         function onMouseEaten() {
-            pendingParts += 4;
-            nbMouseEaten += 1; checkLevel();
-            $("#snakemenu .nbmouse").html("<p>"+nbMouseEaten+"</p>");
+            pendingParts += 4; // number of snake parts to add
+            nbMouseEaten += 1; 
+            checkLevel();
         }
         function onAppleEaten() {
-            pendingParts += 1;
-            if (appleMap.getList.length<1) addRandomApple(1);
-
-            nbAppleEaten += 1; checkLevel();
-            $("#snakemenu .nbapple").html("<p>"+nbAppleEaten+"</p>");
+            pendingParts += 1; // number of snake parts to add
+            nbAppleEaten += 1;
+            checkLevel();
         }
+
         function checkLevel() {
             var nextLevel = NB_BASE_LEVEL * Math.pow(numLevel,2);
-            var testLevel = nbAppleEaten + nbMouseEaten*4;
+
+            var testLevel = nbAppleEaten + nbMouseEaten * 4;
             if (testLevel >= nextLevel) {
                 numLevel += 1;
-                restartMove(actionSpeed-10);
+                restartMove(actionSpeed - 10);
+                infoBarEl.innerHTML = "Level " + numLevel;
             }
         }
 		function initMove() {
-			if (idMove==0) {
+			if (idMove == 0) {
 				idMove = setInterval(actionMove, actionSpeed);
 				return idMove;
 			}
 		}
+
         function restartMove(n) {
             clearInterval(idMove); idMove = 0;
             actionSpeed = n;
             initMove();
         }
-		function actionTest() {
-		   log("bip");
-		}
+
 		function showSnake() {
 			var snakeParts = snake.getParts();
 			for(j=snakeParts.length-1;j>=0;j--) drawSnakePart(j,snakeParts[j]) ;
 		}
+
         function getRotationObj(rot,x,y,imgW,imgH) {
 
             var cw = imgW, ch = imgH, cx = 0, cy = 0;
@@ -536,139 +544,89 @@
             }
         }
 		function drawHead(part) {
-			
-			drawSquare(part,"#1D9D41"); return;
-			
-			var img = Globals.Loader.getAsset('snakehead');
-
-			var rot=0;
-			if (part.dir == "E") {
-				rot = 90;
-			}else if (part.dir == "S") {
-				rot = 180;
-			}else if (part.dir == "O") {
-				rot = 270;
-			}
-			
-			if (rot>0) {
-				var rO = getRotationObj(rot,part.x,part.y,img.width,img.height);
-				ctx.save();
-				ctx.rotate(rot*Math.PI/180);
-				ctx.drawImage(img,rO.x,rO.y,rO.w,rO.h);
-				ctx.restore();                    
-			} else {
-				ctx.drawImage(img,part.x,part.y,img.width,img.height);
-			}
+			drawSquare(part,"#1D9D41");
 		}
-        function drawPartBody(part) {
 
+        function drawPartBody(part) {
             var iColor = Math.min(nbBodyColor,numLevel)
-            //drawBall(part,listBodyColor[iColor-1]);
-            drawSquare(part,listBodyColor[0]);
-        }
-        function drawBall(coord,color) {
-            var mid = blocSize/2;
-            var ballSize = blocSize/2.2;
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc((coord.x+mid), (coord.y+mid),ballSize , 0, Math.PI*2, true);
-            ctx.closePath();
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc((coord.x+mid), (coord.y+mid), ballSize, 0, Math.PI*2, true);
-            ctx.stroke();
+            drawSquare(part,listBodyColor[iColor]);
         }
         function drawSquare(coord,color) {
             ctx.fillStyle = color;
             ctx.fillRect(coord.x,coord.y,blocSize,blocSize)
             ctx.fill();
         }
-        function drawBigBall(coord,color) {
-            var mid = blocSize;
-            var ballSize = 2*blocSize/2.2;
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc((coord.x+mid), (coord.y+mid),ballSize , 0, Math.PI*2, true);
-            ctx.closePath();
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc((coord.x+mid), (coord.y+mid), ballSize, 0, Math.PI*2, true);
-            ctx.stroke();
-        }
-        function addRandomApple(n){
+        function addRandomApple(){
         	
-        	if ( n < 1 ) return;
+        	if (appleMap.getList().length > 19) {
+        		console.log("apple maxed out....")
+        		return;
+        	}
 
-        	if ( appleMap.getList().length > 19 ) return;
-
-            var Ax = getRandom(0,(appW/blocSize)-1)*blocSize;
-            var Ay = getRandom(0,(appH/blocSize)-1)*blocSize;
+            var Ax = getRandom(0, gridW-1) * blocSize;
+            var Ay = getRandom(0, gridH-1) * blocSize;
             var coord = {"x":Ax,"y":Ay};
         	
-        	console.log("apple x=" + Ax + ", y="+ Ay);
 
-            if ( !snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
-            	
-            	appleMap.update(Ax,Ay,"apple");
+            if (!snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
+        		console.log("apple x=" + Ax + ", y="+ Ay);
+            	appleMap.update(Ax, Ay, "apple");
                 drawApple(coord);
             }
         }
 
-        function addRandomMouse(n){
-        	
-        	if ( n < 1 ) return;
+        function addRandomMouse(){
+			if (mouseMap.length > 4 ) {
+				console.log("mouse maxed out...")
+				return;
+			}
 
-			if ( mouseList.length > 4 ) return;
-            Ax = getRandom(0,(appW/blocSize)-1)*blocSize;
-            Ay = getRandom(0,(appH/blocSize)-1)*blocSize;
+            Ax = getRandom(0, gridW-1) * blocSize;
+            Ay = getRandom(0, gridH-1) * blocSize;
+            var coord = {"x":Ax,"y":Ay};
             
-            var newDir = "O"
-            var numDir = getRandom(1,4);
-            if (numDir==1) newDir = "N";
-            if (numDir==2) newDir = "S";
-            if (numDir==3) newDir = "E";
-
-            mouseList[mouseList.length] = {"x":Ax,"y":Ay,"dir":newDir};
+            if (!snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
+        		console.log("apple x=" + Ax + ", y="+ Ay);
+            	mouseMap.update(Ax, Ay, "mouse");
+                drawMouse(coord);
+            }
         }
+
         function getRandom(min, max) {
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
+
         function drawAppleList() {
-            //log("drawAppleList")
-            for (i=0;i<appleList.length;i++) {
+            for (i=0; i < appleList.length; i++) {
             	drawApple(appleList[i]);
-                //log(appleList[i].x+","+appleList[i].y);
             }
         }
         function drawApple(coord) {
-            //drawBall(coord,APPLE_COLOR);
             var img = Globals.Loader.getAsset('apple');
             ctx.drawImage(img,coord.x-blocSize/3,coord.y-blocSize/3,blocSize*1.5,blocSize*1.5);
         }
-        function drawMouse(mouse) {
 
-            var num = Math.floor( getRandom(1,2)/2 )+1;
-            var img = Globals.Loader.getAsset('mouse'+num);
+		function drawMouse(coord) {
+			let asset  = getRandom(0,1) > 0 ? 'mouse1' : 'mouse2';
+		    var img = Globals.Loader.getAsset(asset);
 
-            var rot=0;
-            if (mouse.dir == "E") {
-                rot = 90;
-            }else if (mouse.dir == "S") {
-                rot = 180;
-            }else if (mouse.dir == "O") {
-                rot = 270;
-            }
+		    // Random rotation between -10 and 10 degrees for a lively effect
+		    var rotation = getRandom(-10, 10);
 
-            if (rot>0) {
-                var rO = getRotationObj(rot,mouse.x,mouse.y,img.width,img.height);
-                ctx.save();
-                ctx.rotate(rot*Math.PI/180);
-                ctx.drawImage(img,rO.x,rO.y,rO.w,rO.h);
-                ctx.restore();
-            } else {
-                ctx.drawImage(img,mouse.x,mouse.y,img.width,img.height);
-            }
-        }
+		    if (getRandom(0,3) > 0) {
+				rotation += 190;
+			}
+
+		    // Draw the mouse with a random rotation
+		    ctx.save();
+		    ctx.translate(coord.x + blocSize / 2, coord.y + blocSize / 2); // Move to the center of the mouse
+		    ctx.rotate(rotation * Math.PI / 180); // Rotate the mouse by a random amount
+		    ctx.drawImage(img, -blocSize / 3, -blocSize / 3, blocSize * 1.5, blocSize * 1.5); // Draw the mouse
+		    ctx.restore();
+		}
+
+
+
 		function logSnake() {
 			snake.logSnake();
 		}
@@ -701,57 +659,124 @@
 			ctx.restore();
 
 		}
-		
+
 		function showControls() {
-			var img = Globals.Loader.getAsset('arrowup');
-			var pos = controlPos ;	
-			
-			drawSquare(pos,'#000000');
-			
-			ctx.globalAlpha = 0.3;
-			
-			// arrow up
-			ctx.drawImage(img,pos.u.x,pos.u.y,arrowSize,arrowSize);
+		  const img = Globals.Loader.getAsset('arrowup');
+		  const pos = controlPos;
 
-			var rot,r0 ;
-            // arrow right
-            rot = 90; rO = getRotationObj(rot,pos.r.x,pos.r.y,arrowSize,arrowSize);
-			ctx.save();
-            ctx.rotate(rot*Math.PI/180);
-            ctx.drawImage(img,rO.x,rO.y,rO.w,rO.h);
-            ctx.restore();
+		  ctx.globalAlpha = 0.3;
 
-            // arrow down
-            rot = 180; rO = getRotationObj(rot,pos.d.x,pos.d.y,arrowSize,arrowSize);
-            ctx.save();
-            ctx.rotate(rot*Math.PI/180);
-            ctx.drawImage(img,rO.x,rO.y,rO.w,rO.h);
-            ctx.restore();
+		  // Helper function to draw rotated arrows (Right, Down, Left)
+		  function drawRotatedArrow(rotation, pos) {
+		    const rO = getRotationObj(rotation, pos.x, pos.y, arrowSize, arrowSize);
+		    ctx.save();
+		    ctx.rotate(rotation * Math.PI / 180);
+		    ctx.drawImage(img, rO.x, rO.y, rO.w, rO.h);
+		    ctx.restore();
+		  }
 
-            // arrow left
-            rot = 270 ; rO = getRotationObj(rot,pos.l.x,pos.l.y,arrowSize,arrowSize);
-            ctx.save();
-            ctx.rotate(rot*Math.PI/180);
-            ctx.drawImage(img,rO.x,rO.y,rO.w,rO.h);
-            ctx.restore();
+		  // Draw the arrows (no rotation for Up arrow)
+		  ctx.drawImage(img, pos.u.x, pos.u.y, arrowSize, arrowSize);   // Up
+		  drawRotatedArrow(90,  pos.r);  // Right
+		  drawRotatedArrow(180, pos.d);  // Down
+		  drawRotatedArrow(270, pos.l);  // Left
+
+		  ctx.globalAlpha = 1;
+		}
 
 
-			ctx.globalAlpha = 1;
-			
+		function positionControlsForMobile() {
+		  if (!isMobile()) return;
 
+		  const centerX = canvas.width / 2;
+		  const bottomY = canvas.height - arrowSize * 2.5;
+
+		  // Dynamic offsets based on arrowSize
+		  const verticalOffset = arrowSize * 0.8;  // Adjust vertical space for up/down arrows
+		  const horizontalOffsetLeft = arrowSize * 1.5;  // Adjust horizontal space for left arrow
+		  const horizontalOffsetRight = arrowSize * 0.5;  // Adjust horizontal space for right arrow
+
+		  // Position vertical arrows (Up and Down)
+		  controlPos.u = { x: centerX - arrowSize / 2, y: bottomY - verticalOffset };  // Up
+		  controlPos.d = { x: centerX - arrowSize / 2, y: bottomY + verticalOffset };  // Down
+
+		  // Position horizontal arrows (Left and Right)
+		  controlPos.l = { x: centerX - horizontalOffsetLeft, y: bottomY };  // Left
+		  controlPos.r = { x: centerX + horizontalOffsetRight, y: bottomY };  // Right
+		}
+
+
+		function getTouchDirection(x, y) {
+		  const size = arrowSize;
+
+		  const inside = (pos) =>
+		    x >= pos.x && x <= pos.x + size &&
+		    y >= pos.y && y <= pos.y + size;
+
+		  if (inside(controlPos.u)) return "N";
+		  if (inside(controlPos.r)) return "E";
+		  if (inside(controlPos.d)) return "S";
+		  if (inside(controlPos.l)) return "O";
+
+		  return null;
+		}
+
+
+		function changeDirection(newDir) {
+			if (newDir && sMoveAction == "") sMoveAction = newDir; 
+		}
+
+		function isMobile() {
+		  return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+		}
+
+		function resizeForMobile() {
+			blocSize = Math.floor(window.innerWidth / 24);
+			arrowSize = Math.floor(window.innerWidth / 4);
+			const availableWidth = window.innerWidth - 40;
+			const availableHeight = window.innerHeight - 120;
+
+			// Compute how many cells fit
+			gridW = Math.floor(availableWidth / blocSize);
+			gridH = Math.floor(availableHeight / blocSize);
+
+			// Set canvas size
+			canvas.width = gridW * blocSize;
+			canvas.height = gridH * blocSize;
+
+			appW = blocSize * gridW;
+			appH = blocSize * gridH;
+
+			let infoBar = document.getElementById("info-bar");
+			let restartBtn = document.getElementById("restart-btn");
+	        infoBar.style.fontSize = '32px';
+	        infoBar.style.padding = '12px';
+
+	        restartBtn.style.fontSize = '32px';
+	        restartBtn.style.padding = '12px';
+
+			positionControlsForMobile();
 		}
 
 		return {
-			
+			getCanvas: function() {
+				return canvas;
+			},
 			appReady : function () {
 				isReady = true;
-			},
-			setApp:function(id){
-				var app = $("#"+id);
-				ctx = app[0].getContext("2d");
-				$("#snakecontainer").attr("width", appW).attr("height", appH);
+				infoBarEl = document.getElementById("info-bar");
+
+				if (isMobile()) {
+					console.log("isMobile");
+					resizeForMobile();
+				} else {
+					console.log("default size");
+					$("#snakecontainer").attr("width", appW).attr("height", appH);
+				}
+
 			},
 			startGame: function() {
+
 				isGameOver = false;
 
                 appleList = [];
@@ -766,7 +791,7 @@
                 isPause = false;
                 actionSpeed = INIT_SPEED;
 				cycle1000 = 0;
-				cycle250 = 0;
+				cycleMouse = 0;
                 numLevel = 1;
                 nbAppleEaten = 0;
                 nbMouseEaten = 0;
@@ -780,22 +805,32 @@
 
                 // init snake
                 snake = Snake(blocSize,appW,appH,6);
-                addRandomApple(1);
-                addRandomMouse(1);
+                addRandomApple();
+                addRandomMouse();
                 
                 initCanvas();
 
 				initMove();
 				showGame();
+			},
+			onTouchStart: function(e) {
+				e.preventDefault();
+				const touch = e.touches[0];
+				const rect = canvas.getBoundingClientRect();
+				const touchX = touch.clientX - rect.left;
+				const touchY = touch.clientY - rect.top;
 
+				const dir = getTouchDirection(touchX, touchY);
+				if (dir) {
+					changeDirection(dir);
+				}
 			},
 			onKeyDown: function(evt) {
-
 				
 				// arrows key : 38, 39, 40, 37
 				// WASD : 87, 68, 83, 65
 
-				var sDir = '';
+				var sDir = null;
 				if		(evt.keyCode == 87) sDir = 'N';
 				else if (evt.keyCode == 68) sDir = 'E';
 				else if (evt.keyCode == 83) sDir = 'S';
@@ -810,8 +845,22 @@
 					let hPos = snake.getHeadPos();
 					console.log("snakeHead x=" + hPos.x + ", y="+hPos.y);
 				}
+				else if (evt.key == "b") {
+					let a = appleMap.getList();
+					for (var i = 0; i < a.length; i++) {
+						var o = a[i];
+						console.log(i + ", x=" + o.x + ",y=" + o.y);
+					}
+				}
+				else if (evt.key == "n") {
+					let a = mouseMap.getList();
+					for (var i = 0; i < a.length; i++) {
+						var o = a[i];
+						console.log(i + ", x=" + o.x + ",y=" + o.y);
+					}
+				}
 
-				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
+				changeDirection(sDir);
 			},
 			onClick: function(e) {
 				var click = relMouseCoords(e);
@@ -834,7 +883,9 @@
             }
 		};
 		
-	}(); 
+	})();
+
+
 	var Loader;
 
 	Loader = (function() {
@@ -903,6 +954,7 @@
 	  Loader: new Loader()
 	};
 	
+
 	// do something when all your images are loaded ... 
 	Globals.Loader.loadComplete(function(progress) {
 	    console.log(" app ready");
@@ -919,7 +971,22 @@
 		    AppSnake.onClick(e);
 		});
 
+		document.getElementById("restart-btn").addEventListener("click", function() {
+		  AppSnake.startGame();
+		});
+
+		AppSnake.getCanvas().addEventListener("touchstart", (e) => {
+			AppSnake.onTouchStart(e);
+		});
+
+
+		const restartBtn = document.getElementById("restart-btn");
+		restartBtn.addEventListener("click", AppSnake.startGame);
+		restartBtn.addEventListener("touchstart", AppSnake.startGame);
+
 	});
+
+
 
 
 	var Constants;

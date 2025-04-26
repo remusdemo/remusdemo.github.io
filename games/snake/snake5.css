@@ -1,3 +1,30 @@
+#info-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px;
+}
+
+#info-bar {
+  color: white;
+  font-size: 18px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  border: none;
+}
+
+/* Restart Button Style */
+#restart-btn {
+  color: white;
+  font-size: 18px;
+  padding: 8px 12px;
+  background-color: #ff5050;
+  border-radius: 6px;
+  border: none;
+}
+
 li {
     text-align:left;
 }
