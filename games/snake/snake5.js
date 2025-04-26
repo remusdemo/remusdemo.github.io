@@ -135,13 +135,15 @@
 			that.appH = h;
 		};
 		that.addParts = function(n) {
-			for (i=0;i<n;i++) {
+			for (i = 0; i < n; i++) {
 
-                var app = AppSnake.getAppSize();
-				var newPart = SnakePart(app.w/2,app.h,'N');
+		        var app = AppSnake.getAppSize();
+				var centerX = Math.floor(app.w/2/size) * size;
+				var centerY = Math.floor(app.h/2/size) * size;
+				var newPart = SnakePart(centerX, centerY, 'N');
 
 				var snakeLen = getLength();
-				if ( snakeLen > 0 ) {
+				if (snakeLen > 0) {
 					var lastPart = listPart[snakeLen-1];
 					newPart.x = lastPart.x;
 					newPart.y = lastPart.y;
@@ -150,16 +152,15 @@
 
 					newPart.x += dPos.x;
 					newPart.y += dPos.y;
-                    newPart.dir = lastPart.dir;
+					newPart.dir = lastPart.dir;
 
-                    var newPivots = lastPart.getPivots();
-                    for(j=0;j<newPivots.length;j++) {
-                        var pTime = newPivots[j].time+1;
-                        var pDir = newPivots[j].dir;
-                        var pivot = {"time":pTime,"dir":pDir};
-                        newPart.addPivot(pivot);
-                    }
-
+					var newPivots = lastPart.getPivots();
+					for (j = 0; j < newPivots.length; j++) {
+						var pTime = newPivots[j].time + 1;
+						var pDir = newPivots[j].dir;
+						var pivot = {"time": pTime, "dir": pDir};
+						newPart.addPivot(pivot);
+					}
 				}
 
 				listPart[snakeLen] = newPart;
