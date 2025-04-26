@@ -862,22 +862,6 @@
 
 				changeDirection(sDir);
 			},
-			onClick: function(e) {
-				var click = relMouseCoords(e);
-				var sDir = '';
-				if ( click.y < appH/3 && click.x > appW/3 && click.x < appW*2/3) {
-					sDir = 'N';
-				} else if ( click.y > appH*2/3 && click.x > appW/3 && click.x < appW*2/3) {
-					sDir = 'S';			
-				} else if ( click.x > appW*2/3) {
-					sDir = 'E';
-				} else if ( click.x < appW/3) {
-					sDir = 'O';	
-				}
-				
-
-				if (sMoveAction == "" && sDir != "") sMoveAction = sDir; 
-			},
             getAppSize:function() {
               return {"w":appW,"h":appH};
             }
@@ -962,23 +946,22 @@
 	    AppSnake.appReady();
 	    AppSnake.startGame();
 
+	    const canvas = AppSnake.getCanvas();
+		canvas.addEventListener("click", () => canvas.focus());
+		canvas.addEventListener("touchstart", () => canvas.focus());
 
 		document.addEventListener("keydown", function(e) {
+			console.log("keydown");
 		    AppSnake.onKeyDown(e);
-		});
-
-		document.addEventListener("keydown", function(e) {
-		    AppSnake.onClick(e);
 		});
 
 		document.getElementById("restart-btn").addEventListener("click", function() {
 		  AppSnake.startGame();
 		});
 
-		AppSnake.getCanvas().addEventListener("touchstart", (e) => {
+		canvas.addEventListener("touchstart", (e) => {
 			AppSnake.onTouchStart(e);
 		});
-
 
 		const restartBtn = document.getElementById("restart-btn");
 		restartBtn.addEventListener("click", AppSnake.startGame);
