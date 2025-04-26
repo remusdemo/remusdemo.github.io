@@ -676,9 +676,7 @@
 		  }
 
 		  // Draw the arrows (no rotation for Up arrow)
-		  ctx.drawImage(img, pos.u.x, pos.u.y, arrowSize, arrowSize);   // Up
 		  drawRotatedArrow(90,  pos.r);  // Right
-		  drawRotatedArrow(180, pos.d);  // Down
 		  drawRotatedArrow(270, pos.l);  // Left
 
 		  ctx.globalAlpha = 1;
