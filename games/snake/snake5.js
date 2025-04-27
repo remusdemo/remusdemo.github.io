@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v55";
+		const APP_VERSION = "v56";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -510,8 +510,7 @@
 		        // Draw each mouse at its current position
 		        drawMouse(mouse);
 
-		        // 1/3 chance to not move
-		        if (getRandom(1,3) < 2) return;
+		        if (Math.random() <= 0.3) return;
 
 		        var moveX = getRandom(-1, 1) * blocSize;  // Random X movement (within blocSize)
 		        var moveY = getRandom(-1, 1) * blocSize;  // Random Y movement (within blocSize)
@@ -638,7 +637,7 @@
 
 
 		function addRandomMouse() {
-		    if (mouseMap.getList().length > 20) {
+		    if (mouseMap.getList().length > 10) {
 		        console.log("mouse maxed out...");
 		        return false;
 		    }
