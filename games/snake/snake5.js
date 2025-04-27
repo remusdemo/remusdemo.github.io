@@ -859,11 +859,8 @@
 		function getTouchTurn(x, y) {
 			const size = arrowSize;
 
-			const inside = (pos) =>
-				x >= pos.x && x <= pos.x + size;
-
-			if (inside(controlPos.l)) return "left";
-			if (inside(controlPos.r)) return "right";
+			if (x < appW/2 - 30) return "left";
+			if (x > appW/2 + 30) return "right";
 
 			return null;
 		}
