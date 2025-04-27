@@ -273,7 +273,7 @@
 				}
 			}
 		};
-        that.hitObject = function(coord) {
+        that.anyPartTouches = function(coord) {
             for(i=0;i<listPart.length;i++) {
 				var part = listPart[i];
                 if (part.x == coord.x && part.y == coord.y) {
@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v53";
+		const APP_VERSION = "v55";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -371,28 +371,32 @@
                 goldenOdds += Math.floor(currentLevel * 1.5);
 
             	let appleOdds = 20; // 20% chance of drawing
-            	let mouseOdds = 7; // 7% chance of drawing
 
                 const nbApples = appleMap.getList().length;
-                const nbMouse = mouseMap.getList().length;
 
-                if (nbApples < 1) appleOdds += 30; // 30% boost
-                if (nbMouse < 1) mouseOdds += 20; // 20% boost
+                if (nbApples < 1) appleOdds += 50; // 50% boost
 
-                let appleKind = (Math.floor(Math.random() * 100) < goldenOdds) 
+                let appleKind = (Math.floor(Math.random() * 100) <= goldenOdds) 
                 	? 'gold' : 'apple';
 
-                if (Math.floor(Math.random() * 100) < appleOdds) {
+                if (Math.floor(Math.random() * 100) <= appleOdds) {
 					addRandomApple(appleKind);
-                }
-                if (Math.floor(Math.random() * 100) < mouseOdds) {
-					addRandomMouse();
                 }
             }
 
             // every 250ms
-			if ( cycleMouse == endCycleMouse  ) {
+			if (cycleMouse == endCycleMouse) {
 				cycleMouse = 0;
+
+            	let mouseOdds = 7; // 7% chance of drawing
+
+                const nbMouse = mouseMap.getList().length;
+                if (nbMouse < 1) mouseOdds += 30; // 30% boost
+
+                if (Math.floor(Math.random() * 100) <= mouseOdds) {
+					addRandomMouse();
+                }
+
 				// move mice
 				drawMouseMap();
 			}
@@ -411,12 +415,6 @@
 
             // check for game over
             var hPos = snake.getHeadPos();
-
-			// hit a wall
-            /*if ( hPos.x >= appW || hPos.x < 0 ||
-				hPos.y >= appH || hPos.y < 0 ) {
-                GameOver();snake.moveBack();isGameOver = true;
-            }*/
 
             // eat myself ?
             if (!isGameOver) {
@@ -454,17 +452,18 @@
 		}
 
 
-		function drawLevel(ctx, level, snakeSize) {
+		function drawStats() {
 		    let txtSize = 3.2;
 
+		    let txtColor = (isGameOver) ? 'black' : 'grey';
 		    ctx.save();
 		    ctx.globalAlpha = 0.5; // Transparent text
-		    ctx.fillStyle = "grey";
+		    ctx.fillStyle = txtColor;
 		    ctx.font = Math.floor(blocSize * 2.7) + "px Arial"; // Scale font with blocSize
 		    ctx.textAlign = "center";
 
 		    // Draw Level
-		    ctx.fillText("Level " + level, canvas.width / 2, blocSize * txtSize * 1.3);
+		    ctx.fillText("Level " + currentLevel, canvas.width / 2, blocSize * txtSize * 1.3);
 
 		    // Draw Snake Size (a bit below the Level)
 		    ctx.font = Math.floor(blocSize * 1.4) + "px Arial"; // Slightly smaller font for snake size
@@ -475,20 +474,24 @@
 
 
 		function drawGame() {
-            drawVersion(ctx);
+            drawVersion();
             showControls()	
             drawMouseMap();
             drawAppleMap();
 
-            drawLevel(ctx, currentLevel);
+            drawStats();
             showSnake();
+
+            if (isGameOver) {
+            	drawStats();
+            }
 		}
 
-		function drawVersion(ctx) {
+		function drawVersion() {
 		    var padding = 10; // distance from the top and right
 
-		    ctx.font = "14px Arial"; // small, clean font
-		    ctx.fillStyle = "rgb(36, 36, 36, 0.8)"; // white with a bit of transparency
+		    ctx.font = "40px Arial"; // small, clean font
+		    ctx.fillStyle = "rgb(36, 36, 36, 0.2)"; // white with a bit of transparency
 		    ctx.textAlign = "right"; // align text to the right
 		    ctx.textBaseline = "top"; // align to top of the canvas
 
@@ -502,18 +505,14 @@
 		}
 
 		function drawMouseMap() {
-		    // Get the list of mice from mouseMap
-		    var mice = mouseMap.getList();
-
 		    // Loop through all mice in the list
-		    mice.forEach(function(mouse) {
+		    mouseMap.getList().forEach(function(mouse) {
 		        // Draw each mouse at its current position
 		        drawMouse(mouse);
 
-		        // 20% chance not to move
-		        if (getRandom(1,5)>1) return;
+		        // 1/3 chance to not move
+		        if (getRandom(1,3) < 2) return;
 
-		        // Move the mouse randomly within a certain range (you can tweak this range)
 		        var moveX = getRandom(-1, 1) * blocSize;  // Random X movement (within blocSize)
 		        var moveY = getRandom(-1, 1) * blocSize;  // Random Y movement (within blocSize)
 
@@ -521,7 +520,7 @@
 		        let newX = mouse.x + moveX;
 		        let newY = mouse.y + moveY;
 
-		        // Optional: Ensure the mouse stays within canvas bounds (avoid going out of bounds)
+		        // Optional: Ensure the mouse stays within canvas bounds
 		        newX = Math.max(0, Math.min(canvas.width - blocSize, newX));
 		        newY = Math.max(0, Math.min(canvas.height - blocSize, newY));
 
@@ -541,8 +540,6 @@
             checkLevel();
         }
         function onAppleEaten(apple) {
-        	console.log("APPLE EATEN kind=" + apple.val);
-
         	let newParts = apple.val == 'gold' ? 7 : 1;
             pendingParts += newParts; // number of snake parts to add
             nbAppleEaten += 1;
@@ -621,8 +618,7 @@
         }
 
         function addRandomApple(appleKind = 'apple'){
-        	console.log('add new apple kind=' + appleKind);
-     
+    
         	if (appleMap.getList().length > 19) {
         		console.log("apple maxed out....")
         		return;
@@ -633,28 +629,41 @@
             var coord = {"x":Ax,"y":Ay};
         	
 
-            if (!snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
+            if (!snake.anyPartTouches(coord) && !appleMap.getValue(Ax,Ay) ) {
             	let newApple = appleMap.update(Ax, Ay, appleKind);
                 drawApple(newApple);
+                console.log("Apples =" + appleMap.getList().length);
             }
         }
 
-        function addRandomMouse(){
-			if (mouseMap.length > 4 ) {
-				console.log("mouse maxed out...")
-				return;
-			}
 
-            Ax = getRandom(0, gridW-1) * blocSize;
-            Ay = getRandom(0, gridH-1) * blocSize;
-            var coord = {"x":Ax,"y":Ay};
-            
-            if (!snake.hitObject(coord) && !appleMap.getValue(Ax,Ay) ) {
-        		console.log("apple x=" + Ax + ", y="+ Ay);
-            	mouseMap.update(Ax, Ay, "mouse");
-                drawMouse(coord);
-            }
-        }
+		function addRandomMouse() {
+		    if (mouseMap.getList().length > 20) {
+		        console.log("mouse maxed out...");
+		        return false;
+		    }
+
+		    for (let attempt = 0; attempt < 20; attempt++) {
+		        let Ax = Math.floor(Math.random() * gridW) * blocSize;
+		        let Ay = Math.floor(Math.random() * gridH) * blocSize;
+		        let coord = { x: Ax, y: Ay };
+
+            	if (!snake.anyPartTouches(coord)) {
+	            	if (mouseMap.getValue(Ax, Ay)) {
+	            		onMouseExplodes(Ax, Ay);
+	            	} else {
+		            	mouseMap.update(Ax, Ay, "mouse");
+		                drawMouse(coord);	
+	                	console.log("Mouses =" + mouseMap.getList().length);	
+	                	return true;
+	            	}
+		        }
+		    }
+
+		    // Failed after 10 tries
+		    return false;
+		}
+
 
         function getRandom(min, max) {
             return Math.floor(Math.random() * (max - min + 1) + min);
@@ -678,22 +687,56 @@
 			}
         }
 
+		function onMouseExplodes(Ax, Ay) {
+		    for (let i = 1; i <= 8; i++) {
+		        setTimeout(function() {doMouseExplodes(Ax, Ay);}, i * 200);
+		    }
+		}
+
+		function doMouseExplodes(Ax, Ay) {
+		    var img = Globals.Loader.getAsset('boom');
+		    ctx.save();
+
+		    // Define explosion target size
+		    let targetWidth = blocSize * 8;   // 4 blocs wide
+		    let scaleRatio = targetWidth / img.width; // scale proportionally
+
+		    let targetHeight = img.height * scaleRatio;
+
+		    // Center explosion image at (Ax, Ay)
+		    ctx.translate(Ax, Ay);
+		    ctx.drawImage(img, -targetWidth / 2, -targetHeight / 2, targetWidth, targetHeight);
+
+		    ctx.restore();
+		}
+
 		function drawMouse(coord) {
-			let asset  = getRandom(0,1) > 0 ? 'mouse1' : 'mouse2';
+		    let asset = Math.random() >= 0.5 ? 'mouse1' : 'mouse2';
 		    var img = Globals.Loader.getAsset(asset);
 
-		    // Random rotation between -10 and 10 degrees for a lively effect
-		    var rotation = getRandom(-10, 10);
-
-		    if (getRandom(0,3) > 0) {
-				rotation += 190;
-			}
-
-		    // Draw the mouse with a random rotation
 		    ctx.save();
-		    ctx.translate(coord.x + blocSize / 2, coord.y + blocSize / 2); // Move to the center of the mouse
-		    ctx.rotate(rotation * Math.PI / 180); // Rotate the mouse by a random amount
-		    ctx.drawImage(img, -blocSize / 3, -blocSize / 3, blocSize * 1.5, blocSize * 1.5); // Draw the mouse
+		    ctx.translate(coord.x + blocSize / 2, coord.y + blocSize / 2);
+
+		    // Pick random main directions: 0°, 90°, 180°, or 270°
+		    let rotations = [0, 90, 180, 270];
+		    let rotationDeg = rotations[Math.floor(Math.random() * rotations.length)];
+		    ctx.rotate(rotationDeg * Math.PI / 180);
+
+		    // Mouse size settings
+		    let targetSize = blocSize * 2.1;
+		    let aspectRatio = img.width * 1.3 / img.height;
+
+		    let drawW = targetSize;
+		    let drawH = targetSize;
+
+		    if (aspectRatio > 1) {
+		        drawH = targetSize / aspectRatio;
+		    } else {
+		        drawW = targetSize * aspectRatio;
+		    }
+
+		    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
 		    ctx.restore();
 		}
 
@@ -908,7 +951,7 @@
                 $("#snakemenu .nbmouse").html("<p>0</p>");
 
                 // init snake
-                snake = Snake(blocSize,appW,appH,6);
+                snake = Snake(blocSize, appW,appH, BASE_LEVEL);
                 addRandomApple();
                 addRandomMouse();
                 
@@ -967,22 +1010,18 @@
 				else if (evt.keyCode == 40) sDir = 'S';
 				else if (evt.keyCode == 37) sDir = 'O';
 				else if (evt.keyCode == 32) startPause();
-				else if (evt.key == "p") {
+				else if (evt.key == "k") { 				// == show mouse explosion
+					onMouseExplodes(appW/2, appH/2);
+				}
+				else if (evt.key == "p") { 				// == show color level progressoin
 					currentLevel += 1;
 				}
-				else if (evt.key == "x") {
+				else if (evt.key == "x") { 				// == show color level progressoin
 					let hPos = snake.getHeadPos();
 					console.log("snakeHead x=" + hPos.x + ", y="+hPos.y);
 				}
-				else if (evt.key == "b") {
+				else if (evt.key == "b") { 				// == show all apple positions
 					let a = appleMap.getList();
-					for (var i = 0; i < a.length; i++) {
-						var o = a[i];
-						console.log(i + ", x=" + o.x + ",y=" + o.y);
-					}
-				}
-				else if (evt.key == "n") {
-					let a = mouseMap.getList();
 					for (var i = 0; i < a.length; i++) {
 						var o = a[i];
 						console.log(i + ", x=" + o.x + ",y=" + o.y);
@@ -1105,13 +1144,13 @@
 
 	Constants = {
 	    ASSETS: {
-	        snakehead: 'snakehead.png',
 	        mouse1: 'mouse1.png',
 	        mouse2: 'mouse2.png',
 	        apple: 'apple.png',
 	        goldapple: 'goldapple.png',
 	        arrowup: 'arrowup.png',
 	        gameover: 'game_over.jpg',
+	        boom: 'boom.png',
 	    }
 	}
 	Globals.Loader.load(Constants.ASSETS);
