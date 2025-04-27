@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v56";
+		const APP_VERSION = "v58";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -367,13 +367,13 @@
             if ( cycle1000 == endCycle1000  ) {
                 cycle1000 = 0;
 
-                let goldenOdds = 3; // 3% to create a GOLDEN apple
-                goldenOdds += Math.floor(currentLevel * 1.5);
+                // new APPLE logic
+                let goldenOdds = 3; // % change create a GOLD apple
+                goldenOdds += Math.floor(currentLevel * 0.7); // increase odds for higher levels
 
-            	let appleOdds = 20; // 20% chance of drawing
+            	let appleOdds = 20; // % chance of REGULAR apple
 
                 const nbApples = appleMap.getList().length;
-
                 if (nbApples < 1) appleOdds += 50; // 50% boost
 
                 let appleKind = (Math.floor(Math.random() * 100) <= goldenOdds) 
@@ -382,23 +382,26 @@
                 if (Math.floor(Math.random() * 100) <= appleOdds) {
 					addRandomApple(appleKind);
                 }
+
+                // new MOUSE logic
+            	let mouseOdds = 5; // % chance of drawing
+
+                const nbMouse = mouseMap.getList().length;
+                if (nbMouse < 1) mouseOdds += 15; // % boost
+
+                if (Math.floor(Math.random() * 100) <= mouseOdds) {
+					addRandomMouse();
+                }
             }
 
             // every 250ms
 			if (cycleMouse == endCycleMouse) {
 				cycleMouse = 0;
 
-            	let mouseOdds = 3; // 7% chance of drawing
-
-                const nbMouse = mouseMap.getList().length;
-                if (nbMouse < 1) mouseOdds += 10; // 10% boost
-
-                if (Math.floor(Math.random() * 100) <= mouseOdds) {
-					addRandomMouse();
-                }
-
 				// draw mice and move them
-				drawMouseMap();
+				if (Math.random() >= 0.7) {
+					drawMouseMap();
+				}
 			}
 
             // clear all
@@ -510,7 +513,7 @@
 		        // Draw each mouse at its current position
 		        drawMouse(mouse);
 
-		        if (Math.random() <= 0.3) return;
+		        if (Math.random() <= 0.5) return;
 
 		        var moveX = getRandom(-1, 1) * blocSize;  // Random X movement (within blocSize)
 		        var moveY = getRandom(-1, 1) * blocSize;  // Random Y movement (within blocSize)
@@ -519,7 +522,7 @@
 		        let newX = mouse.x + moveX;
 		        let newY = mouse.y + moveY;
 
-		        // Optional: Ensure the mouse stays within canvas bounds
+		        // Ensure the mouse stays within canvas bounds
 		        newX = Math.max(0, Math.min(canvas.width - blocSize, newX));
 		        newY = Math.max(0, Math.min(canvas.height - blocSize, newY));
 
@@ -637,12 +640,12 @@
 
 
 		function addRandomMouse() {
-		    if (mouseMap.getList().length > 10) {
+		    if (mouseMap.getList().length >= 5) {
 		        console.log("mouse maxed out...");
 		        return false;
 		    }
 
-		    for (let attempt = 0; attempt < 20; attempt++) {
+		    for (let attempt = 0; attempt < 10; attempt++) {
 		        let Ax = Math.floor(Math.random() * gridW) * blocSize;
 		        let Ay = Math.floor(Math.random() * gridH) * blocSize;
 		        let coord = { x: Ax, y: Ay };
