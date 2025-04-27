@@ -388,16 +388,16 @@
 			if (cycleMouse == endCycleMouse) {
 				cycleMouse = 0;
 
-            	let mouseOdds = 7; // 7% chance of drawing
+            	let mouseOdds = 3; // 7% chance of drawing
 
                 const nbMouse = mouseMap.getList().length;
-                if (nbMouse < 1) mouseOdds += 30; // 30% boost
+                if (nbMouse < 1) mouseOdds += 10; // 10% boost
 
                 if (Math.floor(Math.random() * 100) <= mouseOdds) {
 					addRandomMouse();
                 }
 
-				// move mice
+				// draw mice and move them
 				drawMouseMap();
 			}
 
