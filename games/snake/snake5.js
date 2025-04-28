@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v62";
+		const APP_VERSION = "v63";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -368,12 +368,12 @@
                 cycle1000 = 0;
 
                 // new APPLE logic
-                let goldenOdds = 3 + Math.floor(currentLevel * 1.2); // % change create a GOLD apple
             	let appleOdds = 20 + Math.floor(currentLevel * 1.5); // % chance of REGULAR apple
-
                 const nbApples = appleMap.getList().length;
                 if (nbApples < 1) appleOdds += 50; // 50% boost
 
+
+                let goldenOdds = 3; // % chance to create a GOLD apple
                 let appleKind = (Math.floor(Math.random() * 100) <= goldenOdds) 
                 	? 'gold' : 'apple';
 
@@ -382,10 +382,9 @@
                 }
 
                 // new MOUSE logic
-            	let mouseOdds = 5; // % chance of drawing
-
+            	let mouseOdds = 4 + Math.floor(currentLevel * 1.5);
                 const nbMouse = mouseMap.getList().length;
-                if (nbMouse < 1) mouseOdds += 15; // % boost
+                if (nbMouse < 1) mouseOdds += 30; // % boost
 
                 if (Math.floor(Math.random() * 100) <= mouseOdds) {
 					addRandomMouse();
@@ -488,6 +487,7 @@ s
 		}
 
 		function drawGame() {
+			checkLevel();
             drawVersion();
             drawStats();
 
@@ -496,6 +496,10 @@ s
             drawMouseMap();
             drawAppleMap();
             drawSnake();
+
+            if (isGameOver) {
+            	drawStats();
+            }
 		}
 
 		function drawVersion() {
@@ -542,12 +546,10 @@ s
         function onMouseEaten() {
         	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
-        	let newParts = 4 + Math.floor(levelAdd*1.2);
+        	let newParts = 3 + Math.floor(levelAdd*1.2);
 
             pendingParts += newParts;
             nbMouseEaten += 1; 
-
-            checkLevel();
         }
 
         function onAppleEaten(apple) {
@@ -560,20 +562,18 @@ s
 
             pendingParts += newParts;
             nbAppleEaten += 1;
-
-            checkLevel();
         }
 
         function checkLevel() {
         	// nb of parts grown from original size
-        	let totalPoints = snake.getParts().length - BASE_LEVEL + 1;
+        	let totalPoints = snake.getParts().length - BASE_LEVEL;
 
             let nextLevel = getNextLevel();
 
             if (totalPoints >= nextLevel) {
                 currentLevel += 1;
                 let newSpeed = actionSpeed - 10;
-                restartMove(Math.max(70, newSpeed));
+                restartMove(Math.max(50, newSpeed));
             }
         }
 		function initMove() {
@@ -639,7 +639,7 @@ s
 
         function addRandomApple(appleKind = 'apple'){
     
-        	if (appleMap.getList().length > 19) {
+        	if (appleMap.getList().length >= 25) {
         		console.log("apple maxed out....")
         		return;
         	}
@@ -658,7 +658,7 @@ s
 
 
 		function addRandomMouse() {
-		    if (mouseMap.getList().length >= 5) {
+		    if (mouseMap.getList().length >= 10) {
 		        console.log("mouse maxed out...");
 		        return false;
 		    }
@@ -963,10 +963,6 @@ s
 				sMoveAction = "";
 				currentTime = 0;
 
-                // init menu
-                $("#snakemenu .nbapple").html("<p>0</p>");
-                $("#snakemenu .nbmouse").html("<p>0</p>");
-
                 // init snake
                 snake = Snake(blocSize, appW,appH, BASE_LEVEL);
                 addRandomApple();
@@ -1027,10 +1023,11 @@ s
 				else if (evt.keyCode == 40) sDir = 'S';
 				else if (evt.keyCode == 37) sDir = 'O';
 				else if (evt.keyCode == 32) startPause();
-				else if (evt.key == "y") { 				// == add 1 parts
-					pendingParts += 1;
-					totalPoints +=1;
-					checkLevel();
+				else if (evt.key == "u") { 				// == emulate mouse eaten
+					onMouseEaten({val:''});
+				}
+				else if (evt.key == "y") { 				// == emulate apple eaten
+					onAppleEaten({val:'apple'});
 				}
 				else if (evt.key == "k") { 				// == show mouse explosion
 					onMouseExplodes(appW/2, appH/2);
