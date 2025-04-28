@@ -693,11 +693,11 @@ s
 
         	let imgAsset = apple.val == 'gold' ? 'goldapple' : 'apple';
 
-        	if (currentLevel>=2) imgAsset = 'apple2';
         	if (currentLevel>=4) imgAsset = 'apple4';
         	if (currentLevel>=6) imgAsset = 'apple6';
         	if (currentLevel>=8) imgAsset = 'apple8';
-        	if (currentLevel>=10) imgAsset = 'goldapple';
+        	if (currentLevel>=10) imgAsset = 'apple10';
+        	if (currentLevel>=12) imgAsset = 'goldapple';
 
             var img = Globals.Loader.getAsset(imgAsset);
 
@@ -1173,10 +1173,10 @@ s
 	        mouse1: 'mouse1.png',
 	        mouse2: 'mouse2.png',
 	        apple: 'apple.png',
-	        apple2: 'apple2.png',
 	        apple4: 'apple4.png',
 	        apple6: 'apple6.png',
 	        apple8: 'apple8.png',
+	        apple10: 'apple10.png',
 	        goldapple: 'goldapple.png',
 	        arrowup: 'arrowup.png',
 	        gameover: 'game_over.jpg',
