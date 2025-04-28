@@ -697,6 +697,7 @@ s
         	if (currentLevel>=4) imgAsset = 'apple4';
         	if (currentLevel>=6) imgAsset = 'apple6';
         	if (currentLevel>=8) imgAsset = 'apple8';
+        	if (currentLevel>=10) imgAsset = 'goldapple';
 
             var img = Globals.Loader.getAsset(imgAsset);
 
