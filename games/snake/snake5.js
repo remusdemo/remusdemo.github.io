@@ -658,7 +658,7 @@ s
 
 
 		function addRandomMouse() {
-		    if (mouseMap.getList().length >= 10) {
+		    if (mouseMap.getList().length >= 8) {
 		        console.log("mouse maxed out...");
 		        return false;
 		    }
