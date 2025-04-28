@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v60";
+		const APP_VERSION = "v61";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -368,8 +368,8 @@
                 cycle1000 = 0;
 
                 // new APPLE logic
-                let goldenOdds = 3 + currentLevel; // % change create a GOLD apple
-            	let appleOdds = 20 + Math.floor(currentLevel * 1.2); // % chance of REGULAR apple
+                let goldenOdds = 3 + Math.floor(currentLevel * 1.2); // % change create a GOLD apple
+            	let appleOdds = 20 + Math.floor(currentLevel * 1.5); // % chance of REGULAR apple
 
                 const nbApples = appleMap.getList().length;
                 if (nbApples < 1) appleOdds += 50; // 50% boost
@@ -539,10 +539,8 @@ s
 		    });
 		}
 
-
-
         function onMouseEaten() {
-        	let levelAdd = Math.min(0, currentLevel-2);
+        	let levelAdd = Math.max(0, currentLevel-2);
         	let newParts = 4 + Math.floor(levelAdd*1.2);
 
             pendingParts += newParts;
@@ -550,14 +548,14 @@ s
 
             checkLevel();
         }
+
         function onAppleEaten(apple) {
 
-        	let levelAdd = Math.min(0, currentLevel-2);
+        	let levelAdd = Math.max(0, currentLevel-2);
 
         	let newParts = apple.val == 'gold' 
         		? 5 + Math.floor(levelAdd * 1.5)
         		: 1 + levelAdd;
-
 
             pendingParts += newParts;
             nbAppleEaten += 1;
