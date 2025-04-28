@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v63";
+		const APP_VERSION = "v65";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -692,6 +692,12 @@ s
         function drawApple(apple) {
 
         	let imgAsset = apple.val == 'gold' ? 'goldapple' : 'apple';
+
+        	if (currentLevel>=2) imgAsset = 'apple2';
+        	if (currentLevel>=4) imgAsset = 'apple4';
+        	if (currentLevel>=6) imgAsset = 'apple6';
+        	if (currentLevel>=8) imgAsset = 'apple8';
+
             var img = Globals.Loader.getAsset(imgAsset);
 
             ctx.drawImage(img,apple.x-blocSize/3,apple.y-blocSize/3,blocSize*1.5,blocSize*1.5);
@@ -1166,6 +1172,10 @@ s
 	        mouse1: 'mouse1.png',
 	        mouse2: 'mouse2.png',
 	        apple: 'apple.png',
+	        apple2: 'apple2.png',
+	        apple4: 'apple4.png',
+	        apple6: 'apple6.png',
+	        apple8: 'apple8.png',
 	        goldapple: 'goldapple.png',
 	        arrowup: 'arrowup.png',
 	        gameover: 'game_over.jpg',
