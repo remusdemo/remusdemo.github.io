@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v68";
+		const APP_VERSION = "v71";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -321,18 +321,22 @@
 		    'rgb(255,165,0)',   // Orange
 		    'rgb(255,140,0)',   // Dark Orange
 		    'rgb(246,165,245)', // Light Pink
-		    'rgb(249,102,176)', // Pink	
+		    'rgb(249,102,176)', // Pink		
 		    'rgb(241,49,49)',   // Red
 		    'rgb(139,0,0)',     // Dark Red
 		    'rgb(0,0,0)'        // Black
 		];
 
-        var BASE_LEVEL = 5;
+        const BASE_LEVEL = 5;
+        const INIT_SPEED = 150
+        const MOUSE_SPEED = 400
+
         var pendingParts = 0;
         var nbAppleEaten = 0;
         var nbMouseEaten = 0;
-        var INIT_SPEED = 150
+
 		var actionSpeed = 0;
+		var mouseSpeed = 0;
         var currentLevel = 1;
         var isGameOver = false;
         
@@ -360,11 +364,11 @@
 			cycleMouse ++;
             cycle1000 ++;
 
-            var endCycleMouse = Math.floor(350/actionSpeed);
+            var endCycleMouse = Math.floor(mouseSpeed/actionSpeed);
             var endCycle1000 = Math.floor(1000/actionSpeed);
 
             // every second
-            if ( cycle1000 == endCycle1000  ) {
+            if (cycle1000 == endCycle1000) {
                 cycle1000 = 0;
 
                 // new APPLE logic
@@ -390,7 +394,7 @@
                 }
             }
 
-            // every 250ms
+            // every 350ms at 1st, then faster
 			if (cycleMouse == endCycleMouse) {
 				cycleMouse = 0;
 
@@ -441,7 +445,7 @@
             	}
             	
                 // grow a part ?
-                if ( pendingParts > 0 ) {
+                if (pendingParts > 0) {
                     snake.addParts(1);
                     pendingParts -= 1;
                 }
@@ -498,6 +502,7 @@ s
 
             if (isGameOver) {
             	drawStats();
+            	drawGameOverMessage();
             }
 		}
 
@@ -519,6 +524,7 @@ s
 		}
 
 		function drawMouseMap() {
+
 		    // Loop through all mice in the list
 		    mouseMap.getList().forEach(function(mouse) {
 		        // Draw each mouse at its current position
@@ -529,13 +535,23 @@ s
 		        var moveX = getRandom(-1, 1) * blocSize;  // Random X movement (within blocSize)
 		        var moveY = getRandom(-1, 1) * blocSize;  // Random Y movement (within blocSize)
 
-		        // Update the mouse's position
-		        let newX = mouse.x + moveX;
-		        let newY = mouse.y + moveY;
+				// Update the mouse's position
+				let newX = mouse.x + moveX;
+				let newY = mouse.y + moveY;
 
-		        // Ensure the mouse stays within canvas bounds
-		        newX = Math.max(0, Math.min(canvas.width - blocSize, newX));
-		        newY = Math.max(0, Math.min(canvas.height - blocSize, newY));
+				// Wrap around the canvas edges
+				if (newX < 0) {
+				    newX = canvas.width - blocSize;
+				} else if (newX >= canvas.width) {
+				    newX = 0;
+				}
+
+				if (newY < 0) {
+				    newY = canvas.height - blocSize;
+				} else if (newY >= canvas.height) {
+				    newY = 0;
+				}
+
 
 		        mouseMap.move(mouse, newX, newY);
 
@@ -561,6 +577,15 @@ s
             nbAppleEaten += 1;
         }
 
+        function onNextLevel() {
+            currentLevel += 1;
+
+            mouseSpeed = Math.max(250, mouseSpeed - 20);
+
+            let newSpeed = actionSpeed - 10;
+            restartMove(Math.max(50, newSpeed)); // max snake spead is 50ms
+        }
+
         function checkLevel() {
         	// nb of parts grown from original size
         	let totalPoints = snake.getParts().length - BASE_LEVEL;
@@ -568,9 +593,7 @@ s
             let nextLevel = getNextLevel();
 
             if (totalPoints >= nextLevel) {
-                currentLevel += 1;
-                let newSpeed = actionSpeed - 10;
-                restartMove(Math.max(50, newSpeed));
+            	onNextLevel();
             }
         }
 		function initMove() {
@@ -783,12 +806,9 @@ s
 
 		function onGameOver() {
 			clearInterval(idMove);
-
 			idMove = 0;
 			currentTime = 0;
             isGameOver = true;
-
-            drawGameOverMessage();
 		}
 		
 
@@ -955,6 +975,7 @@ s
                 // init game variables
                 isPause = false;
                 actionSpeed = INIT_SPEED;
+                mouseSpeed = MOUSE_SPEED;
 				cycle1000 = 0;
 				cycleMouse = 0;
                 currentLevel = 1;
