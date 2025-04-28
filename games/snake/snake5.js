@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v67";
+		const APP_VERSION = "v68";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -372,7 +372,6 @@
                 const nbApples = appleMap.getList().length;
                 if (nbApples < 1) appleOdds += 50; // 50% boost
 
-
                 let goldenOdds = 3; // % chance to create a GOLD apple
                 let appleKind = (Math.floor(Math.random() * 100) <= goldenOdds) 
                 	? 'gold' : 'apple';
@@ -382,7 +381,7 @@
                 }
 
                 // new MOUSE logic
-            	let mouseOdds = 2 + Math.floor(currentLevel * 1.2);
+            	let mouseOdds = 3 + Math.floor(currentLevel * 1.2);
                 const nbMouse = mouseMap.getList().length;
                 if (nbMouse < 1) mouseOdds += 30; // % boost
 
@@ -544,9 +543,9 @@ s
 		}
 
         function onMouseEaten() {
-        	let levelAdd = Math.max(1, Math.floor(currentLevel/3));
+        	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
-        	let newParts = 3 + Math.floor(levelAdd*1.2);
+        	let newParts = 3 * levelAdd; // 3 times the apple value
 
             pendingParts += newParts;
             nbMouseEaten += 1; 
@@ -556,9 +555,7 @@ s
 
         	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
-        	let newParts = apple.val == 'gold' 
-        		? 5 + Math.floor(levelAdd * 1.5)
-        		: levelAdd;
+        	let newParts = apple.val == 'gold' ? (5 * levelAdd) : levelAdd;
 
             pendingParts += newParts;
             nbAppleEaten += 1;
