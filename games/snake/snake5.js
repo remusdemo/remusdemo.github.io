@@ -540,7 +540,7 @@ s
 		}
 
         function onMouseEaten() {
-        	let levelAdd = Math.max(1, Math.floor(currentLevel/2);
+        	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
         	let newParts = 4 + Math.floor(levelAdd*1.2);
 
@@ -552,7 +552,7 @@ s
 
         function onAppleEaten(apple) {
 
-        	let levelAdd = Math.max(1, Math.floor(currentLevel/2);
+        	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
         	let newParts = apple.val == 'gold' 
         		? 5 + Math.floor(levelAdd * 1.5)
