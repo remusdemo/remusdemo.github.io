@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v61";
+		const APP_VERSION = "v62";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -540,7 +540,8 @@ s
 		}
 
         function onMouseEaten() {
-        	let levelAdd = Math.max(0, currentLevel-2);
+        	let levelAdd = Math.max(1, Math.floor(currentLevel/2);
+
         	let newParts = 4 + Math.floor(levelAdd*1.2);
 
             pendingParts += newParts;
@@ -551,11 +552,11 @@ s
 
         function onAppleEaten(apple) {
 
-        	let levelAdd = Math.max(0, currentLevel-2);
+        	let levelAdd = Math.max(1, Math.floor(currentLevel/2);
 
         	let newParts = apple.val == 'gold' 
         		? 5 + Math.floor(levelAdd * 1.5)
-        		: 1 + levelAdd;
+        		: levelAdd;
 
             pendingParts += newParts;
             nbAppleEaten += 1;
