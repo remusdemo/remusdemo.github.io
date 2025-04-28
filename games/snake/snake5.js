@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v65";
+		const APP_VERSION = "v67";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -368,7 +368,7 @@
                 cycle1000 = 0;
 
                 // new APPLE logic
-            	let appleOdds = 20 + Math.floor(currentLevel * 1.5); // % chance of REGULAR apple
+            	let appleOdds = 20 + Math.floor(currentLevel * 1.3); // % chance of REGULAR apple
                 const nbApples = appleMap.getList().length;
                 if (nbApples < 1) appleOdds += 50; // 50% boost
 
@@ -382,7 +382,7 @@
                 }
 
                 // new MOUSE logic
-            	let mouseOdds = 4 + Math.floor(currentLevel * 1.5);
+            	let mouseOdds = 2 + Math.floor(currentLevel * 1.2);
                 const nbMouse = mouseMap.getList().length;
                 if (nbMouse < 1) mouseOdds += 30; // % boost
 
@@ -544,7 +544,7 @@ s
 		}
 
         function onMouseEaten() {
-        	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
+        	let levelAdd = Math.max(1, Math.floor(currentLevel/3));
 
         	let newParts = 3 + Math.floor(levelAdd*1.2);
 
@@ -639,7 +639,7 @@ s
 
         function addRandomApple(appleKind = 'apple'){
     
-        	if (appleMap.getList().length >= 25) {
+        	if (appleMap.getList().length >= 20) {
         		console.log("apple maxed out....")
         		return;
         	}
@@ -658,7 +658,7 @@ s
 
 
 		function addRandomMouse() {
-		    if (mouseMap.getList().length >= 8) {
+		    if (mouseMap.getList().length >= 4) {
 		        console.log("mouse maxed out...");
 		        return false;
 		    }
