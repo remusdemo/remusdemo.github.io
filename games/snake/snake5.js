@@ -294,7 +294,7 @@
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
-		let blocSize = 13;
+		let blocSize = 14;
 		let gridW = 50;
 		let gridH = 30;
 
@@ -329,7 +329,7 @@
 
         const BASE_LEVEL = 5;
         const INIT_SPEED = 150
-        const MOUSE_SPEED = 400
+        const MOUSE_SPEED = 450
 
         var pendingParts = 0;
         var nbAppleEaten = 0;
@@ -462,7 +462,6 @@
 			}
 
 			return Math.floor(BASE_LEVEL * Math.pow(maxLevelQuad,2)) + (40 * (currentLevel - maxLevelQuad));
-s
 		}
 
 
@@ -530,7 +529,9 @@ s
 		        // Draw each mouse at its current position
 		        drawMouse(mouse);
 
-		        if (Math.random() <= 0.5) return;
+
+				let noMoveOdds = Math.min(90, 60 + Math.floor(currentLevel * 1.5));
+		        if (Math.floor(Math.random() * 100) <= noMoveOdds) return;
 
 		        var moveX = getRandom(-1, 1) * blocSize;  // Random X movement (within blocSize)
 		        var moveY = getRandom(-1, 1) * blocSize;  // Random Y movement (within blocSize)
@@ -580,7 +581,7 @@ s
         function onNextLevel() {
             currentLevel += 1;
 
-            mouseSpeed = Math.max(250, mouseSpeed - 20);
+            mouseSpeed = Math.max(250, mouseSpeed - 15);
 
             let newSpeed = actionSpeed - 10;
             restartMove(Math.max(50, newSpeed)); // max snake spead is 50ms
@@ -758,7 +759,12 @@ s
 		}
 
 		function drawMouse(coord) {
-		    let asset = Math.random() >= 0.5 ? 'mouse1' : 'mouse2';
+
+			let noMoveOdds = 70;
+
+			let asset = 'mouse1';
+	        if (Math.floor(Math.random() * 100) <= noMoveOdds) asset = 'mouse2';
+
 		    var img = Globals.Loader.getAsset(asset);
 
 		    ctx.save();
@@ -921,6 +927,7 @@ s
 
 		function resizeForMobile() {
 			blocSize = Math.floor(window.innerWidth / 24);
+
 			arrowSize = Math.floor(window.innerWidth / 4);
 			const availableWidth = window.innerWidth - 40;
 			const availableHeight = window.innerHeight - 100;
