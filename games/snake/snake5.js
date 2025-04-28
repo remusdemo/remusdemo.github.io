@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v58";
+		const APP_VERSION = "v60";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -368,10 +368,8 @@
                 cycle1000 = 0;
 
                 // new APPLE logic
-                let goldenOdds = 3; // % change create a GOLD apple
-                goldenOdds += Math.floor(currentLevel * 0.7); // increase odds for higher levels
-
-            	let appleOdds = 20; // % chance of REGULAR apple
+                let goldenOdds = 3 + currentLevel; // % change create a GOLD apple
+            	let appleOdds = 20 + Math.floor(currentLevel * 1.2); // % chance of REGULAR apple
 
                 const nbApples = appleMap.getList().length;
                 if (nbApples < 1) appleOdds += 50; // 50% boost
@@ -421,7 +419,7 @@
 
             // eat myself ?
             if (!isGameOver) {
-                if ( snake.isHeadOnBody() ) {
+                if (snake.isHeadOnBody()) {
                     onGameOver();
                 }
             }
@@ -454,6 +452,17 @@
             drawGame();
 		}
 
+		function getNextLevel() {
+			let maxLevelQuad = 4;
+
+			if (currentLevel < (maxLevelQuad+1)) {
+				return Math.floor(BASE_LEVEL * Math.pow(currentLevel,2));
+			}
+
+			return Math.floor(BASE_LEVEL * Math.pow(maxLevelQuad,2)) + (40 * (currentLevel - maxLevelQuad));
+s
+		}
+
 
 		function drawStats() {
 		    let txtSize = 3.2;
@@ -462,32 +471,31 @@
 		    ctx.save();
 		    ctx.globalAlpha = 0.5; // Transparent text
 		    ctx.fillStyle = txtColor;
-		    ctx.font = Math.floor(blocSize * 2.7) + "px Arial"; // Scale font with blocSize
+		    ctx.font = Math.floor(blocSize * 2.3) + "px Arial"; // Scale font with blocSize
 		    ctx.textAlign = "center";
 
-		    // Draw Level
+            let nextLevel = getNextLevel();
+		   	let currentSize = snake.getParts().length;
+
 		    ctx.fillText("Level " + currentLevel, canvas.width / 2, blocSize * txtSize * 1.3);
 
-		    // Draw Snake Size (a bit below the Level)
+		    let sizeTxt = "Size " + currentSize + " >> " + (nextLevel + BASE_LEVEL);
+
 		    ctx.font = Math.floor(blocSize * 1.4) + "px Arial"; // Slightly smaller font for snake size
-		    ctx.fillText("Size: " + snake.getParts().length, canvas.width / 2, blocSize * txtSize * 2.3);
+		    ctx.fillText(sizeTxt, canvas.width / 2, blocSize * txtSize * 2.3);
 
 		    ctx.restore();
 		}
 
-
 		function drawGame() {
             drawVersion();
+            drawStats();
+
             showControls()	
+
             drawMouseMap();
             drawAppleMap();
-
-            drawStats();
-            showSnake();
-
-            if (isGameOver) {
-            	drawStats();
-            }
+            drawSnake();
 		}
 
 		function drawVersion() {
@@ -534,28 +542,39 @@
 
 
         function onMouseEaten() {
-        	let newParts = 4;
-            pendingParts += newParts; // number of snake parts to add
+        	let levelAdd = Math.min(0, currentLevel-2);
+        	let newParts = 4 + Math.floor(levelAdd*1.2);
+
+            pendingParts += newParts;
             nbMouseEaten += 1; 
 
-            totalPoints += newParts;
             checkLevel();
         }
         function onAppleEaten(apple) {
-        	let newParts = apple.val == 'gold' ? 7 : 1;
-            pendingParts += newParts; // number of snake parts to add
+
+        	let levelAdd = Math.min(0, currentLevel-2);
+
+        	let newParts = apple.val == 'gold' 
+        		? 5 + Math.floor(levelAdd * 1.5)
+        		: 1 + levelAdd;
+
+
+            pendingParts += newParts;
             nbAppleEaten += 1;
 
-            totalPoints += newParts;
             checkLevel();
         }
 
         function checkLevel() {
-            var nextLevel = Math.floor(BASE_LEVEL * Math.pow(currentLevel,2));
+        	// nb of parts grown from original size
+        	let totalPoints = snake.getParts().length - BASE_LEVEL + 1;
+
+            let nextLevel = getNextLevel();
 
             if (totalPoints >= nextLevel) {
                 currentLevel += 1;
-                restartMove(actionSpeed - 10);
+                let newSpeed = actionSpeed - 10;
+                restartMove(Math.max(70, newSpeed));
             }
         }
 		function initMove() {
@@ -571,7 +590,7 @@
             initMove();
         }
 
-		function showSnake() {
+		function drawSnake() {
 			var snakeParts = snake.getParts();
 			for(j=snakeParts.length-1;j>=0;j--) drawSnakePart(j,snakeParts[j]) ;
 		}
@@ -1009,6 +1028,11 @@
 				else if (evt.keyCode == 40) sDir = 'S';
 				else if (evt.keyCode == 37) sDir = 'O';
 				else if (evt.keyCode == 32) startPause();
+				else if (evt.key == "y") { 				// == add 1 parts
+					pendingParts += 1;
+					totalPoints +=1;
+					checkLevel();
+				}
 				else if (evt.key == "k") { 				// == show mouse explosion
 					onMouseExplodes(appW/2, appH/2);
 				}
