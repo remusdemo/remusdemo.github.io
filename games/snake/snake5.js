@@ -290,7 +290,7 @@
 	
 	/* singleton to manage the game */
 	const AppSnake = (function() {
-		const APP_VERSION = "v71";
+		const APP_VERSION = "v72";
 		const canvas = document.getElementById("snakecontainer");
 		const ctx = canvas.getContext("2d");
 
@@ -480,7 +480,7 @@
 
 		    ctx.fillText("Level " + currentLevel, canvas.width / 2, blocSize * txtSize * 1.3);
 
-		    let sizeTxt = "Size " + currentSize + " >> " + (nextLevel + BASE_LEVEL);
+		    let sizeTxt = "Size " + currentSize + " -> " + (nextLevel + BASE_LEVEL);
 
 		    ctx.font = Math.floor(blocSize * 1.4) + "px Arial"; // Slightly smaller font for snake size
 		    ctx.fillText(sizeTxt, canvas.width / 2, blocSize * txtSize * 2.3);
@@ -562,7 +562,7 @@
         function onMouseEaten() {
         	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
-        	let newParts = 3 * levelAdd; // 3 times the apple value
+        	let newParts = Math.min(5, 3 * levelAdd); // 3 times the apple value
 
             pendingParts += newParts;
             nbMouseEaten += 1; 
@@ -572,7 +572,9 @@
 
         	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
-        	let newParts = apple.val == 'gold' ? (5 * levelAdd) : levelAdd;
+        	let newParts = apple.val == 'gold' 
+        		? Math.min(7, (5 * levelAdd))
+        		: levelAdd;
 
             pendingParts += newParts;
             nbAppleEaten += 1;
