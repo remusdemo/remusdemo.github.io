@@ -562,7 +562,7 @@
         function onMouseEaten() {
         	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
-        	let newParts = Math.min(5, 3 * levelAdd); // 3 times the apple value
+        	let newParts = Math.max(5, 3 * levelAdd); // 3 times the apple value
 
             pendingParts += newParts;
             nbMouseEaten += 1; 
@@ -573,7 +573,7 @@
         	let levelAdd = Math.max(1, Math.floor(currentLevel/2));
 
         	let newParts = apple.val == 'gold' 
-        		? Math.min(7, (5 * levelAdd))
+        		? Math.max(7, (5 * levelAdd))
         		: levelAdd;
 
             pendingParts += newParts;
